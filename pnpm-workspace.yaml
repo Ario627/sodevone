@@ -1,0 +1,22 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+allowBuilds:
+  "@parcel/watcher": true
+  "@scarf/scarf": false
+  "@swc/core": true
+  esbuild: true
+  lmdb: true
+  msgpackr-extract: true
+  sharp: true
+
+minimumReleaseAgeExclude:
+  - "@angular/common@22.2.4"
+  - "@angular/compiler-cli@22.2.4"
+  - "@angular/compiler@22.2.4"
+  - "@angular/core@22.2.4"
+  - "@angular/forms@22.2.4"
+  - "@angular/platform-browser@22.2.4"
+  - "@angular/router@22.2.4"
+  - postgres@4.0.0

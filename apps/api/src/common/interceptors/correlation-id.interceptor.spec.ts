@@ -1,0 +1,76 @@
+import type { CallHandler, ExecutionContext } from '@nestjs/common';
+import { firstValueFrom, of } from 'rxjs';
+import { describe, expect, it, vi } from 'vitest';
+import { CORRELATION_ID_HEADER, CorrelationIdInterceptor } from './correlation-id.interceptor.js';
+
+const POLA_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+function siapkan(incoming?: string | string[]) {
+  const headers: Record<string, unknown> =
+    incoming === undefined ? {} : { [CORRELATION_ID_HEADER]: incoming };
+  const setHeader = vi.fn();
+  const context = {
+    switchToHttp: () => ({
+      getRequest: () => ({ headers }),
+      getResponse: () => ({ setHeader }),
+    }),
+  } as unknown as ExecutionContext;
+  const next: CallHandler = { handle: () => of('ok') };
+
+  return { context, next, headers, setHeader };
+}
+
+async function jalankan(incoming?: string | string[]) {
+  const { context, next, headers, setHeader } = siapkan(incoming);
+  await firstValueFrom(new CorrelationIdInterceptor().intercept(context, next));
+
+  return { headers, setHeader };
+}
+
+describe('CorrelationIdInterceptor', () => {
+  it('membuat id baru bila klien tidak mengirim', async () => {
+    const { headers, setHeader } = await jalankan();
+
+    const id = headers[CORRELATION_ID_HEADER] as string;
+
+    expect(id).toMatch(POLA_UUID);
+    expect(setHeader).toHaveBeenCalledWith(CORRELATION_ID_HEADER, id);
+  });
+
+  it('mempertahankan id klien yang sah agar jejak antar layanan bersambung', async () => {
+    const { headers } = await jalankan('3f9a1c2e-7b41');
+
+    expect(headers[CORRELATION_ID_HEADER]).toBe('3f9a1c2e-7b41');
+  });
+
+  it('mengganti id terlalu pendek dengan id baru', async () => {
+    const { headers } = await jalankan('abc');
+
+    expect(headers[CORRELATION_ID_HEADER]).toMatch(POLA_UUID);
+  });
+
+  it('mengganti id berisi karakter kendali untuk mencegah pemalsuan baris log', async () => {
+    const { headers } = await jalankan('3f9a1c2e\nSet-Cookie: palsu=1');
+
+    expect(headers[CORRELATION_ID_HEADER]).toMatch(POLA_UUID);
+  });
+
+  it('mengganti id terlalu panjang', async () => {
+    const { headers } = await jalankan('a'.repeat(65));
+
+    expect(headers[CORRELATION_ID_HEADER]).toMatch(POLA_UUID);
+  });
+
+  it('mengganti header ganda menjadi satu id baru', async () => {
+    const { headers } = await jalankan(['3f9a1c2e-7b41', '3f9a1c2e-7b42']);
+
+    expect(headers[CORRELATION_ID_HEADER]).toMatch(POLA_UUID);
+  });
+
+  it('meneruskan aliran respons tanpa mengubah nilai', async () => {
+    const { context, next } = siapkan();
+    const hasil = await firstValueFrom(new CorrelationIdInterceptor().intercept(context, next));
+
+    expect(hasil).toBe('ok');
+  });
+});

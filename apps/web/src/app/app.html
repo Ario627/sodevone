@@ -1,0 +1,19 @@
+<header class="sampul">
+  <a class="sampul__merek" routerLink="/">{{ namaKelas() }}</a>
+  <nav class="sampul__nav" aria-label="Navigasi utama">
+    <a routerLink="/" routerLinkActive="is-aktif" [routerLinkActiveOptions]="{ exact: true }">
+      Beranda
+    </a>
+    <a routerLink="/pengumuman" routerLinkActive="is-aktif">Pengumuman</a>
+    <a routerLink="/agenda" routerLinkActive="is-aktif">Agenda</a>
+    <a routerLink="/galeri" routerLinkActive="is-aktif">Galeri</a>
+  </nav>
+</header>
+
+<main id="konten-utama" class="konten" tabindex="-1">
+  <router-outlet />
+</main>
+
+<footer class="kaki">
+  <p>{{ namaKelas() }} &middot; situs resmi kelas</p>
+</footer>
