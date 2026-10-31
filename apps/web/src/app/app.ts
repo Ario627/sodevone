@@ -1,5 +1,15 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, inject, signal } from '@angular/core';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter } from 'rxjs';
+
+const TAUTAN_NAVIGASI = [
+  { label: 'Beranda', jalur: '/', tepat: true },
+  { label: 'Pengumuman', jalur: '/pengumuman', tepat: false },
+  { label: 'Agenda', jalur: '/agenda', tepat: false },
+  { label: 'Galeri', jalur: '/galeri', tepat: false },
+  { label: 'Tentang', jalur: '/tentang', tepat: false },
+] as const;
 
 @Component({
   selector: 'kelas-root',
@@ -9,5 +19,28 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
   templateUrl: './app.html',
 })
 export class App {
+  private readonly router = inject(Router);
+  private readonly host = inject(ElementRef) as ElementRef<HTMLElement>;
+  private readonly destroyRef = inject(DestroyRef);
+
+  private navigasiPertama = true;
+
   protected readonly namaKelas = signal('Kelas XI PPLG 1');
+  protected readonly tautanNavigasi = TAUTAN_NAVIGASI;
+
+  constructor() {
+    this.router.events
+      .pipe(
+        filter((peristiwa) => peristiwa instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => {
+        if (this.navigasiPertama) {
+          this.navigasiPertama = false;
+          return;
+        }
+
+        this.host.nativeElement.querySelector<HTMLElement>('main')?.focus({ preventScroll: true });
+      });
+  }
 }

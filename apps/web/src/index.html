@@ -6,11 +6,20 @@
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
-    <meta name="description" content="Website resmi Kelas XI PPLG 1: pengumuman, agenda, dan dokumentasi kegiatan." />
+    <meta name="theme-color" content="#faf9f6" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#16161a" media="(prefers-color-scheme: dark)" />
+    <meta
+      name="description"
+      content="Website resmi Kelas XI PPLG 1: pengumuman, agenda, dan dokumentasi kegiatan."
+    />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
   </head>
   <body>
-    <a class="skip-link" href="#konten-utama">Lompat ke konten utama</a>
-    <app-root></app-root>
+    <a
+      class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-xs focus:bg-sinyal focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-teks-terbalik"
+      href="#konten-utama"
+      >Lompat ke konten utama</a
+    >
+    <kelas-root></kelas-root>
   </body>
 </html>

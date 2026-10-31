@@ -45,7 +45,7 @@ export const galleryAlbum = pgTable(
     check('ck_gallery_album_status', sql`status IN ('draft', 'published', 'archived')`),
     check(
       'ck_gallery_album_published_at_required',
-      sql`status <> 'published' OR published_at IS NOT NULL`,
+      sql`status = 'draft' OR published_at IS NOT NULL`,
     ),
   ],
 );

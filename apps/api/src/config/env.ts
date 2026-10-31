@@ -22,6 +22,7 @@ export const EnvSchema = z.object({
   DATABASE_SSL: z.enum(['disable', 'require']).default('disable'),
   DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(50).default(10),
   DATABASE_STATEMENT_TIMEOUT_MS: z.coerce.number().int().min(100).max(120_000).default(15_000),
+  MEDIA_ROOT: z.string().min(1).max(400).default('storage'),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

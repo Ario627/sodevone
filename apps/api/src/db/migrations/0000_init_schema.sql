@@ -49,7 +49,7 @@ CREATE TABLE "announcements" (
         CONSTRAINT "ck_announcements_category" CHECK (category IN ('akademik', 'kegiatan', 'administrasi', 'umum')),
         CONSTRAINT "ck_announcements_status" CHECK (status IN ('draft', 'published', 'archived')),
         CONSTRAINT "ck_announcements_visibility" CHECK (visibility IN ('public', 'internal')),
-        CONSTRAINT "ck_announcements_published_at_required" CHECK (status <> 'published' OR published_at IS NOT NULL)
+        CONSTRAINT "ck_announcements_published_at_required" CHECK (status = 'draft' OR published_at IS NOT NULL)
 );
 
 CREATE TABLE "audit_log" (
@@ -105,7 +105,7 @@ CREATE TABLE "gallery_album" (
         CONSTRAINT "ck_gallery_album_slug_format" CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
         CONSTRAINT "ck_gallery_album_title_length" CHECK (char_length(title) >= 3),
         CONSTRAINT "ck_gallery_album_status" CHECK (status IN ('draft', 'published', 'archived')),
-        CONSTRAINT "ck_gallery_album_published_at_required" CHECK (status <> 'published' OR published_at IS NOT NULL)
+        CONSTRAINT "ck_gallery_album_published_at_required" CHECK (status = 'draft' OR published_at IS NOT NULL)
 );
 
 CREATE TABLE "gallery_image" (

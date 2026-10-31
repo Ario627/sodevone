@@ -39,6 +39,10 @@ export const MAX_IMAGE_PIXELS = 24_000_000;
 
 export const ALBUM_IMAGES_PER_PAGE = 24;
 
+export const ALBUM_LIST_PER_PAGE = 12;
+
+export const ALBUM_LIST_MAX_PER_PAGE = 50;
+
 export const AlbumStatusSchema = z.enum(['draft', 'published', 'archived']);
 
 export type AlbumStatus = z.infer<typeof AlbumStatusSchema>;
@@ -84,6 +88,18 @@ export const AlbumDetailQuerySchema = z.object({
 });
 
 export type AlbumDetailQuery = z.infer<typeof AlbumDetailQuerySchema>;
+
+export const AlbumListQuerySchema = z.object({
+  page: PageParamSchema,
+  perPage: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(ALBUM_LIST_MAX_PER_PAGE)
+    .default(ALBUM_LIST_PER_PAGE),
+});
+
+export type AlbumListQuery = z.infer<typeof AlbumListQuerySchema>;
 
 export const AlbumAdminSchema = z.object({
   id: UuidSchema,

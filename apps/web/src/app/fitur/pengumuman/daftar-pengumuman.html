@@ -1,0 +1,149 @@
+<header class="max-w-[46rem]">
+  <p class="teks-meta text-sinyal">Arsip</p>
+  <h1 class="mt-4 font-serif text-[clamp(2rem,5vw,3rem)] leading-[1] tracking-[-0.025em]">
+    Pengumuman
+  </h1>
+  <p class="mt-4 text-md text-teks-kuat-sekunder">
+    Pengumuman yang sudah diterbitkan pengurus, terbaru lebih dulu.
+  </p>
+</header>
+
+<form
+  class="mt-10 grid gap-5 border-y border-garis-halus py-5 sm:grid-cols-[minmax(0,1fr)_11rem_auto] sm:items-end"
+  (submit)="cari($event)"
+>
+  <div class="min-w-0">
+    <label for="cari" class="teks-meta text-teks-sekunder">Kata kunci</label>
+    <input
+      id="cari"
+      type="search"
+      name="q"
+      maxlength="120"
+      autocomplete="off"
+      placeholder="Judul atau isi"
+      [value]="drafKataKunci()"
+      (input)="ubahKataKunci($event)"
+      class="mt-2 min-h-11 w-full border-b border-garis-tegas bg-transparent text-md placeholder:text-teks-sekunder focus:border-sinyal"
+    />
+  </div>
+
+  <div>
+    <label for="kategori" class="teks-meta text-teks-sekunder">Kategori</label>
+    <select
+      id="kategori"
+      (change)="ubahKategori($event)"
+      class="mt-2 min-h-11 w-full border-b border-garis-tegas bg-transparent text-sm focus:border-sinyal"
+    >
+      <option value="" [selected]="query().kategori === undefined">Semua</option>
+      @for (pilihan of kategoriTersedia; track pilihan) {
+        <option [value]="pilihan" [selected]="query().kategori === pilihan">
+          {{ labelKategori(pilihan) }}
+        </option>
+      }
+    </select>
+  </div>
+
+  <div class="flex items-center justify-between gap-6 sm:justify-end">
+    <label class="flex min-h-11 items-center gap-2 text-sm text-teks-sekunder">
+      <input
+        type="checkbox"
+        [checked]="query().arsip"
+        (change)="ubahArsip($event)"
+        class="size-4 accent-sinyal"
+      />
+      Sertakan arsip
+    </label>
+    <button
+      type="submit"
+      class="min-h-11 border-b border-garis-tegas px-1 text-sm transition-colors duration-100 ease-keluar hover:border-sinyal hover:text-sinyal"
+    >
+      Cari
+    </button>
+  </div>
+</form>
+
+@if (sedangMemuat()) {
+  <kelas-memuat class="mt-8" pesan="Memuat pengumuman" [jumlah]="4" />
+} @else if (galat(); as kegagalan) {
+  <kelas-galat-muat
+    class="mt-8"
+    [pesan]="kegagalan.message"
+    [korelasi]="kegagalan.correlationId"
+    (cobaLagi)="muatUlang()"
+  />
+} @else if (data(); as halaman) {
+  @if (halaman.items.length === 0) {
+    <kelas-kosong
+      class="mt-8"
+      judul="Tidak ada pengumuman"
+      [pesan]="pesanKosong()"
+      [tautan]="tautanKosong()"
+      [labelTautan]="labelKosong()"
+    />
+  } @else {
+    <ol class="mt-8 border-t border-garis-halus">
+      @for (item of halaman.items; track item.slug) {
+        <li class="border-b border-garis-halus">
+          <a
+            [routerLink]="['/pengumuman', item.slug]"
+            class="group grid gap-2 py-6 sm:grid-cols-[8.5rem_minmax(0,1fr)] sm:gap-8"
+          >
+            <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 sm:flex-col sm:gap-1">
+              <time [attr.datetime]="item.publishedAt" class="teks-meta text-teks-sekunder">
+                {{ tanggalTeks(item.publishedAt) }}
+              </time>
+              <span class="teks-meta text-teks-sekunder">{{ labelKategori(item.category) }}</span>
+            </div>
+            <div class="min-w-0">
+              <h2
+                class="font-serif text-lg leading-snug tracking-[-0.01em] underline-offset-4 group-hover:underline"
+              >
+                {{ item.title }}
+              </h2>
+              <p class="mt-2 line-clamp-2 max-w-[58ch] text-sm text-teks-sekunder">
+                {{ item.excerpt }}
+              </p>
+              @if (item.state === 'archived') {
+                <span class="teks-meta mt-3 inline-block border border-garis-tegas px-2 py-1">
+                  Arsip
+                </span>
+              }
+            </div>
+          </a>
+        </li>
+      }
+    </ol>
+
+    @if (halaman.meta.totalPages > 1) {
+      <nav aria-label="Navigasi halaman" class="mt-8 flex items-center justify-between gap-4">
+        <div class="min-w-28">
+          @if (tautanMundur(); as sebelumnya) {
+            <a
+              [routerLink]="['/pengumuman']"
+              [queryParams]="sebelumnya"
+              rel="prev"
+              class="inline-flex min-h-11 items-center gap-2 text-sm transition-colors duration-100 ease-keluar hover:text-sinyal"
+            >
+              <span aria-hidden="true">&larr;</span> Sebelumnya
+            </a>
+          }
+        </div>
+
+        <p class="teks-meta text-teks-sekunder">{{ ringkasanHalaman() }}</p>
+
+        <div class="flex min-w-28 justify-end">
+          @if (tautanMaju(); as berikutnya) {
+            <a
+              [routerLink]="['/pengumuman']"
+              [queryParams]="berikutnya"
+              rel="next"
+              class="inline-flex min-h-11 items-center gap-2 text-sm transition-colors duration-100 ease-keluar hover:text-sinyal"
+            >
+              Berikutnya <span aria-hidden="true">&rarr;</span>
+            </a>
+          }
+        </div>
+      </nav>
+    }
+  }
+}

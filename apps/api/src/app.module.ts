@@ -5,8 +5,13 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import type { Env } from './config/env.js';
 import { parseEnv } from './config/env.js';
+import { AnnouncementModule } from './announcement/announcement.module.js';
 import { DatabaseModule } from './db/database.module.js';
+import { EventModule } from './event/event.module.js';
+import { GalleryModule } from './gallery/gallery.module.js';
 import { HealthModule } from './health/health.module.js';
+import { HomeModule } from './home/home.module.js';
+import { MediaModule } from './media/media.module.js';
 
 @Module({
   imports: [
@@ -47,6 +52,11 @@ import { HealthModule } from './health/health.module.js';
       ],
     }),
     DatabaseModule,
+    AnnouncementModule,
+    EventModule,
+    GalleryModule,
+    MediaModule,
+    HomeModule,
     HealthModule,
   ],
   providers: [

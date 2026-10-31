@@ -1,19 +1,49 @@
-<header class="sampul">
-  <a class="sampul__merek" routerLink="/">{{ namaKelas() }}</a>
-  <nav class="sampul__nav" aria-label="Navigasi utama">
-    <a routerLink="/" routerLinkActive="is-aktif" [routerLinkActiveOptions]="{ exact: true }">
-      Beranda
+<header class="border-b border-garis-halus">
+  <div
+    class="mx-auto flex max-w-[76rem] flex-wrap items-end justify-between gap-x-10 gap-y-3 px-5 pt-4 pb-3 sm:px-8 sm:pt-6 sm:pb-4"
+  >
+    <a class="group flex flex-col gap-1" routerLink="/">
+      <span class="font-serif text-xl leading-none tracking-[-0.01em]">{{ namaKelas() }}</span>
+      <span class="teks-meta text-teks-sekunder">Situs resmi kelas</span>
     </a>
-    <a routerLink="/pengumuman" routerLinkActive="is-aktif">Pengumuman</a>
-    <a routerLink="/agenda" routerLinkActive="is-aktif">Agenda</a>
-    <a routerLink="/galeri" routerLinkActive="is-aktif">Galeri</a>
-  </nav>
+
+    <nav
+      aria-label="Navigasi utama"
+      class="scrollbar-none w-full overflow-x-auto overscroll-x-contain lg:w-auto"
+    >
+      <ul class="flex items-center gap-6 text-sm whitespace-nowrap">
+        @for (tautan of tautanNavigasi; track tautan.jalur) {
+          <li>
+            <a
+              [routerLink]="tautan.jalur"
+              routerLinkActive="text-teks-utama after:scale-x-100"
+              [routerLinkActiveOptions]="{ exact: tautan.tepat }"
+              ariaCurrentWhenActive="page"
+              class="relative inline-block py-1 text-teks-sekunder transition-colors duration-100 ease-keluar after:absolute after:inset-x-0 after:bottom-0 after:h-px after:origin-left after:scale-x-0 after:bg-sinyal after:transition-transform after:duration-150 after:ease-keluar motion-reduce:after:transition-none hover:text-teks-utama"
+              >{{ tautan.label }}</a
+            >
+          </li>
+        }
+      </ul>
+    </nav>
+  </div>
 </header>
 
-<main id="konten-utama" class="konten" tabindex="-1">
+<main
+  id="konten-utama"
+  class="mx-auto w-full max-w-[76rem] flex-1 px-5 pt-10 pb-20 sm:px-8 sm:pt-14"
+  tabindex="-1"
+>
   <router-outlet />
 </main>
 
-<footer class="kaki">
-  <p>{{ namaKelas() }} &middot; situs resmi kelas</p>
+<footer class="border-t border-garis-halus">
+  <div
+    class="mx-auto flex max-w-[76rem] flex-col gap-2 px-5 py-7 sm:flex-row sm:items-baseline sm:justify-between sm:px-8"
+  >
+    <p class="teks-meta text-teks-sekunder">
+      {{ namaKelas() }} &middot; Pengembangan Perangkat Lunak dan Gim
+    </p>
+    <p class="teks-meta text-teks-sekunder">Dikelola pengurus kelas</p>
+  </div>
 </footer>

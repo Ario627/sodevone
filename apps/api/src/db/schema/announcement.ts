@@ -53,7 +53,7 @@ export const announcement = pgTable(
     check('ck_announcements_visibility', sql`visibility IN ('public', 'internal')`),
     check(
       'ck_announcements_published_at_required',
-      sql`status <> 'published' OR published_at IS NOT NULL`,
+      sql`status = 'draft' OR published_at IS NOT NULL`,
     ),
   ],
 );

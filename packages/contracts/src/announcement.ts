@@ -1,5 +1,11 @@
 import { z } from 'zod';
-import { IsoDateTimeSchema, PublishedStateSchema, SlugSchema, UuidSchema } from './common.js';
+import {
+  IsoDateTimeSchema,
+  PublishedStateSchema,
+  SlugSchema,
+  UuidSchema,
+  paginatedSchema,
+} from './common.js';
 import {
   BooleanQuerySchema,
   PageParamSchema,
@@ -50,6 +56,10 @@ export const AnnouncementListQuerySchema = z.object({
 });
 
 export type AnnouncementListQuery = z.infer<typeof AnnouncementListQuerySchema>;
+
+export const AnnouncementPageSchema = paginatedSchema(AnnouncementSummarySchema);
+
+export type AnnouncementPage = z.infer<typeof AnnouncementPageSchema>;
 
 export const AnnouncementAdminSchema = z.object({
   id: UuidSchema,

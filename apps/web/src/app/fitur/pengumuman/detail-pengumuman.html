@@ -1,0 +1,76 @@
+@if (tidakDitemukan()) {
+  <section class="max-w-[34rem]">
+    <p class="teks-meta text-sinyal">Galat 404</p>
+    <h1 class="mt-4 font-serif text-3xl tracking-[-0.02em]">Pengumuman tidak ditemukan</h1>
+    <p class="mt-4 text-md text-teks-kuat-sekunder">
+      Tautannya mungkin sudah berubah, atau pengumuman ini belum diterbitkan.
+    </p>
+    <a
+      routerLink="/pengumuman"
+      class="mt-8 inline-flex min-h-11 items-center gap-2 border-b border-garis-tegas text-sm transition-colors duration-100 ease-keluar hover:border-sinyal hover:text-sinyal"
+    >
+      <span aria-hidden="true">&larr;</span> Semua pengumuman
+    </a>
+  </section>
+} @else if (sedangMemuat()) {
+  <kelas-memuat pesan="Memuat pengumuman" [jumlah]="3" />
+} @else if (galat(); as kegagalan) {
+  <kelas-galat-muat
+    [pesan]="kegagalan.message"
+    [korelasi]="kegagalan.correlationId"
+    (cobaLagi)="muatUlang()"
+  />
+} @else if (data(); as item) {
+  <nav aria-label="Remah" class="teks-meta text-teks-sekunder">
+    <ol class="flex flex-wrap items-center gap-2">
+      <li><a routerLink="/" class="hover:text-teks-utama">Beranda</a></li>
+      <li aria-hidden="true">/</li>
+      <li><a routerLink="/pengumuman" class="hover:text-teks-utama">Pengumuman</a></li>
+      <li aria-hidden="true">/</li>
+      <li aria-current="page" class="max-w-[18rem] truncate text-teks-utama">{{ item.title }}</li>
+    </ol>
+  </nav>
+
+  <article class="mt-8 max-w-[68ch]">
+    <header class="border-b border-garis-halus pb-6">
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <span class="teks-meta text-sinyal">{{ labelKategori(item.category) }}</span>
+        <time [attr.datetime]="item.publishedAt" class="teks-meta text-teks-sekunder">
+          {{ tanggalJamTeks(item.publishedAt) }} WIB
+        </time>
+        @if (item.state === 'archived') {
+          <span class="teks-meta border border-garis-tegas px-2 py-0.5">Arsip</span>
+        }
+      </div>
+
+      <h1
+        class="mt-4 font-serif text-[clamp(1.75rem,4.5vw,2.75rem)] leading-[1.05] tracking-[-0.025em]"
+      >
+        {{ item.title }}
+      </h1>
+
+      <p class="mt-4 text-md text-teks-kuat-sekunder">{{ item.excerpt }}</p>
+
+      @if (item.authorName; as penulis) {
+        <p class="mt-4 text-sm text-teks-sekunder">Ditulis oleh {{ penulis }}</p>
+      }
+    </header>
+
+    <div class="prosa mt-8" [innerHTML]="item.bodyHtml"></div>
+
+    <footer class="mt-10 border-t border-garis-halus pt-5">
+      @if (item.updatedAt !== item.publishedAt) {
+        <p class="teks-meta text-teks-sekunder">
+          Diperbarui {{ tanggalJamTeks(item.updatedAt) }} WIB
+        </p>
+      }
+
+      <a
+        routerLink="/pengumuman"
+        class="mt-4 inline-flex min-h-11 items-center gap-2 border-b border-garis-tegas text-sm transition-colors duration-100 ease-keluar hover:border-sinyal hover:text-sinyal"
+      >
+        <span aria-hidden="true">&larr;</span> Semua pengumuman
+      </a>
+    </footer>
+  </article>
+}

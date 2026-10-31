@@ -1,0 +1,1 @@
+export const PUBLIC_READ_CACHE = 'public, max-age=30, stale-while-revalidate=60';
