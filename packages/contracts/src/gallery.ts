@@ -76,6 +76,10 @@ export const AlbumSummarySchema = z.object({
 
 export type AlbumSummary = z.infer<typeof AlbumSummarySchema>;
 
+export const AlbumPageSchema = paginatedSchema(AlbumSummarySchema);
+
+export type AlbumPage = z.infer<typeof AlbumPageSchema>;
+
 export const AlbumDetailSchema = AlbumSummarySchema.extend({
   images: paginatedSchema(GalleryImageSchema),
 });
@@ -91,12 +95,7 @@ export type AlbumDetailQuery = z.infer<typeof AlbumDetailQuerySchema>;
 
 export const AlbumListQuerySchema = z.object({
   page: PageParamSchema,
-  perPage: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .max(ALBUM_LIST_MAX_PER_PAGE)
-    .default(ALBUM_LIST_PER_PAGE),
+  perPage: z.coerce.number().int().min(1).max(ALBUM_LIST_MAX_PER_PAGE).default(ALBUM_LIST_PER_PAGE),
 });
 
 export type AlbumListQuery = z.infer<typeof AlbumListQuerySchema>;

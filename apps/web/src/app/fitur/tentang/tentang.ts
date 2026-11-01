@@ -27,22 +27,23 @@ const JALUR = [
   imports: [RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <header class="max-w-[46rem]">
-      <p class="teks-meta text-sinyal">Informasi kelas</p>
-      <h1 class="mt-4 font-serif text-[clamp(2rem,5vw,3rem)] leading-[1] tracking-[-0.025em]">
-        Tentang kelas ini
+    <header class="border-b border-garis-halus pb-8">
+      <h1 class="font-serif text-[clamp(2rem,5vw,2.75rem)] leading-[1] tracking-[-0.03em]">
+        Tentang
       </h1>
-      <p class="mt-5 text-md text-teks-kuat-sekunder">
-        Kelas XI PPLG 1 adalah rombongan belajar jurusan Pengembangan Perangkat Lunak dan Gim.
-        Situs ini menjadi kanal resmi kelas untuk pengumuman, jadwal kegiatan, dan dokumentasi.
+      <p class="mt-3 max-w-[44ch] text-sm text-teks-kuat-sekunder">
+        Kelas XI PPLG 1, jurusan Pengembangan Perangkat Lunak dan Gim. Situs ini kanal resmi kelas.
       </p>
     </header>
 
-    <section aria-labelledby="identitas-judul" class="mt-12 grid gap-8 lg:grid-cols-12">
-      <div class="lg:col-span-4">
-        <h2 id="identitas-judul" class="teks-meta text-teks-sekunder">Identitas</h2>
+    <section aria-labelledby="identitas-judul" class="mt-10 grid gap-6 lg:grid-cols-12">
+      <div class="lg:col-span-3">
+        <h2 id="identitas-judul" class="teks-meta flex items-baseline gap-3">
+          <span aria-hidden="true" class="text-sinyal">01</span>
+          <span class="text-teks-kuat-sekunder">Identitas</span>
+        </h2>
       </div>
-      <dl class="lg:col-span-8">
+      <dl class="lg:col-span-9">
         <div
           class="grid grid-cols-[1fr_auto] items-baseline gap-4 border-t border-garis-halus py-3"
         >
@@ -70,11 +71,14 @@ const JALUR = [
       </dl>
     </section>
 
-    <section aria-labelledby="isi-judul" class="mt-12 grid gap-8 lg:grid-cols-12">
-      <div class="lg:col-span-4">
-        <h2 id="isi-judul" class="teks-meta text-teks-sekunder">Isi situs</h2>
+    <section aria-labelledby="isi-judul" class="mt-12 grid gap-6 lg:grid-cols-12">
+      <div class="lg:col-span-3">
+        <h2 id="isi-judul" class="teks-meta flex items-baseline gap-3">
+          <span aria-hidden="true" class="text-sinyal">02</span>
+          <span class="text-teks-kuat-sekunder">Isi situs</span>
+        </h2>
       </div>
-      <ul class="divide-y divide-garis-halus border-y border-garis-halus lg:col-span-8">
+      <ul class="divide-y divide-garis-halus border-y border-garis-halus lg:col-span-9">
         @for (bagian of jalur; track bagian.jalur) {
           <li>
             <a
@@ -85,10 +89,9 @@ const JALUR = [
                 {{ bagian.nomor }}
               </span>
               <span>
-                <span
-                  class="block text-base underline-offset-4 group-hover:underline"
-                  >{{ bagian.judul }}</span
-                >
+                <span class="block text-base underline-offset-4 group-hover:underline">{{
+                  bagian.judul
+                }}</span>
                 <span class="mt-1 block text-sm text-teks-sekunder">{{ bagian.ringkas }}</span>
               </span>
               <span
@@ -103,19 +106,17 @@ const JALUR = [
       </ul>
     </section>
 
-    <section aria-labelledby="pengurus-judul" class="mt-12 grid gap-8 lg:grid-cols-12">
-      <div class="lg:col-span-4">
-        <h2 id="pengurus-judul" class="teks-meta text-teks-sekunder">Pengurus</h2>
+    <section aria-labelledby="pengurus-judul" class="mt-12 grid gap-6 lg:grid-cols-12">
+      <div class="lg:col-span-3">
+        <h2 id="pengurus-judul" class="teks-meta flex items-baseline gap-3">
+          <span aria-hidden="true" class="text-sinyal">03</span>
+          <span class="text-teks-kuat-sekunder">Pengurus</span>
+        </h2>
       </div>
-      <div class="lg:col-span-8">
-        <p class="max-w-[52ch] text-sm text-teks-sekunder">
-          Situs ini dikelola pengurus kelas. Nama dan kontak pribadi pengurus tidak dipublikasikan
-          di halaman ini; informasi yang dibutuhkan disampaikan langsung oleh pengurus.
-        </p>
-        <p class="mt-4 max-w-[52ch] text-sm text-teks-sekunder">
-          Konten hanya dapat diubah oleh pengurus melalui panel administrasi.
-        </p>
-      </div>
+      <p class="max-w-[48ch] text-sm text-teks-sekunder lg:col-span-9">
+        Situs ini dikelola pengurus kelas. Nama dan kontak pribadi tidak dipublikasikan di sini;
+        informasi yang dibutuhkan disampaikan langsung oleh pengurus.
+      </p>
     </section>
   `,
 })

@@ -12,7 +12,6 @@ import type { AnnouncementListQuery } from '@kelas/contracts';
 import { toApiFailure } from '../../inti/api/dasar';
 import { bacaHalaman, permintaanDaftar } from '../../inti/api/pengumuman.api';
 import { KATEGORI_URUT, labelKategori } from '../../inti/format/label';
-import { tanggalTeks } from '../../inti/format/tanggal';
 import {
   adaFilter,
   daftarQueryDari,
@@ -23,10 +22,11 @@ import {
 import { GalatMuat } from '../../komponen/galat-muat/galat-muat';
 import { Kosong } from '../../komponen/kosong/kosong';
 import { Memuat } from '../../komponen/memuat/memuat';
+import { StempelTanggal } from '../../komponen/stempel-tanggal/stempel-tanggal';
 
 @Component({
   selector: 'kelas-daftar-pengumuman',
-  imports: [RouterLink, Memuat, Kosong, GalatMuat],
+  imports: [RouterLink, Memuat, Kosong, GalatMuat, StempelTanggal],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './daftar-pengumuman.html',
 })
@@ -67,7 +67,6 @@ export class DaftarPengumuman {
 
   protected readonly kategoriTersedia = KATEGORI_URUT;
   protected readonly labelKategori = labelKategori;
-  protected readonly tanggalTeks = tanggalTeks;
 
   private readonly meta = computed(() => this.data()?.meta);
 

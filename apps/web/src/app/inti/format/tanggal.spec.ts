@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  hariBulan,
   jamTeks,
   rentangJam,
+  tahunAjaran,
   tanggalJamTeks,
   tanggalPanjangTeks,
   tanggalTeks,
@@ -60,5 +62,34 @@ describe('rentangJam', () => {
     expect(rentangJam(SIANG, '2026-10-30T18:00:00.000Z')).toBe(
       '30 Okt 2026, 14.05 – 31 Okt 2026, 01.00',
     );
+  });
+});
+
+describe('hariBulan', () => {
+  it('memecah tanggal menjadi hari dua digit dan bulan huruf besar', () => {
+    expect(hariBulan(SIANG)).toEqual({ hari: '30', bulan: 'OKT', tahun: '2026' });
+  });
+
+  it('memakai zona Jakarta sehingga tanggal ikut bergeser', () => {
+    expect(hariBulan('2026-10-29T18:30:00.000Z')).toEqual({
+      hari: '30',
+      bulan: 'OKT',
+      tahun: '2026',
+    });
+  });
+
+  it('memberi nilai cadangan yang lebarnya sama untuk tanggal rusak', () => {
+    expect(hariBulan('bukan tanggal')).toEqual({ hari: '--', bulan: '---', tahun: '----' });
+  });
+});
+
+describe('tahunAjaran', () => {
+  it('memulai tahun ajaran pada Juli', () => {
+    expect(tahunAjaran(new Date('2026-06-30T03:00:00.000Z'))).toBe('2025/2026');
+    expect(tahunAjaran(new Date('2026-07-01T03:00:00.000Z'))).toBe('2026/2027');
+  });
+
+  it('memakai tahun ajaran berjalan pada November', () => {
+    expect(tahunAjaran(new Date('2026-11-01T03:00:00.000Z'))).toBe('2026/2027');
   });
 });

@@ -3,14 +3,16 @@ import { ChangeDetectionStrategy, Component, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { toApiFailure } from '../../inti/api/dasar';
 import { bacaKoleksi, permintaanAgenda } from '../../inti/api/agenda.api';
-import { rentangJam, tanggalTeks } from '../../inti/format/tanggal';
+import { rentangJam } from '../../inti/format/tanggal';
 import { GalatMuat } from '../../komponen/galat-muat/galat-muat';
+import { KepalaBagian } from '../../komponen/kepala-bagian/kepala-bagian';
 import { Kosong } from '../../komponen/kosong/kosong';
 import { Memuat } from '../../komponen/memuat/memuat';
+import { StempelTanggal } from '../../komponen/stempel-tanggal/stempel-tanggal';
 
 @Component({
   selector: 'kelas-daftar-agenda',
-  imports: [RouterLink, Memuat, Kosong, GalatMuat],
+  imports: [RouterLink, Memuat, Kosong, GalatMuat, KepalaBagian, StempelTanggal],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './daftar-agenda.html',
 })
@@ -35,7 +37,6 @@ export class DaftarAgenda {
     return koleksi !== undefined && koleksi.upcoming.length === 0 && koleksi.past.length === 0;
   });
 
-  protected readonly tanggalTeks = tanggalTeks;
   protected readonly rentangJam = rentangJam;
 
   protected muatUlang(): void {

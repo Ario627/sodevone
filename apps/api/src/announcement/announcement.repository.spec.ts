@@ -29,8 +29,7 @@ const MIGRATION_FILE = path.join(
   '0000_init_schema.sql',
 );
 
-const WAKTU = (hari: number): string =>
-  `2026-10-${String(hari).padStart(2, '0')}T02:00:00.000Z`;
+const WAKTU = (hari: number): string => `2026-10-${String(hari).padStart(2, '0')}T02:00:00.000Z`;
 
 type Klien = ReturnType<typeof postgres>;
 
@@ -129,185 +128,188 @@ async function siapkanData(db: Database): Promise<string> {
   return penulis.id;
 }
 
-describe.skipIf(DATABASE_URL === undefined)('AnnouncementRepository dengan basis data nyata', () => {
-  beforeAll(async () => {
-    admin = postgres(DATABASE_URL as string, { max: 1, onnotice: () => undefined });
-    await admin.unsafe(`drop schema if exists ${SKEMA} cascade`);
-    await admin.unsafe(`create schema ${SKEMA}`);
+describe.skipIf(DATABASE_URL === undefined)(
+  'AnnouncementRepository dengan basis data nyata',
+  () => {
+    beforeAll(async () => {
+      admin = postgres(DATABASE_URL as string, { max: 1, onnotice: () => undefined });
+      await admin.unsafe(`drop schema if exists ${SKEMA} cascade`);
+      await admin.unsafe(`create schema ${SKEMA}`);
 
-    client = postgres(DATABASE_URL as string, {
-      max: 1,
-      onnotice: () => undefined,
-      connection: { search_path: SKEMA },
-    });
-    root = drizzle(client, { schema });
-
-    await client.unsafe(tanpaKualifikasiSkema(await readFile(MIGRATION_FILE, 'utf8'))).simple();
-  });
-
-  afterAll(async () => {
-    await client.end({ timeout: 5 });
-    await admin.unsafe(`drop schema if exists ${SKEMA} cascade`);
-    await admin.end({ timeout: 5 });
-  });
-
-  it('hanya mengembalikan pengumuman terbit dan mengurutkan tanggal menurun', async () => {
-    await dalamTransaksi(async (db) => {
-      await siapkanData(db);
-
-      const hasil = await repositoryOf(db).findPage({
-        page: 1,
-        perPage: 10,
-        includeArchived: false,
+      client = postgres(DATABASE_URL as string, {
+        max: 1,
+        onnotice: () => undefined,
+        connection: { search_path: SKEMA },
       });
+      root = drizzle(client, { schema });
 
-      expect(hasil.total).toBe(3);
-      expect(hasil.rows.map((row) => row.slug)).toEqual([
-        'perubahan-jadwal',
-        'pensi-sekolah',
-        'diskon-serbatus',
-      ]);
-      expect(hasil.rows.some((row) => row.status === 'draft')).toBe(false);
+      await client.unsafe(tanpaKualifikasiSkema(await readFile(MIGRATION_FILE, 'utf8'))).simple();
     });
-  });
 
-  it('menyembunyikan arsip kecuali diminta', async () => {
-    await dalamTransaksi(async (db) => {
-      await siapkanData(db);
-      const repository = repositoryOf(db);
+    afterAll(async () => {
+      await client.end({ timeout: 5 });
+      await admin.unsafe(`drop schema if exists ${SKEMA} cascade`);
+      await admin.end({ timeout: 5 });
+    });
 
-      const tersembunyi = await repository.findPage({
-        page: 1,
-        perPage: 50,
-        includeArchived: false,
+    it('hanya mengembalikan pengumuman terbit dan mengurutkan tanggal menurun', async () => {
+      await dalamTransaksi(async (db) => {
+        await siapkanData(db);
+
+        const hasil = await repositoryOf(db).findPage({
+          page: 1,
+          perPage: 10,
+          includeArchived: false,
+        });
+
+        expect(hasil.total).toBe(3);
+        expect(hasil.rows.map((row) => row.slug)).toEqual([
+          'perubahan-jadwal',
+          'pensi-sekolah',
+          'diskon-serbatus',
+        ]);
+        expect(hasil.rows.some((row) => row.status === 'draft')).toBe(false);
       });
-      const terbuka = await repository.findPage({ page: 1, perPage: 50, includeArchived: true });
-
-      expect(tersembunyi.rows.some((row) => row.slug === 'pengumuman-arsip')).toBe(false);
-      expect(terbuka.rows.some((row) => row.slug === 'pengumuman-arsip')).toBe(true);
-      expect(terbuka.total).toBe(4);
     });
-  });
 
-  it('menyaring kategori tanpa mencampur kategori lain', async () => {
-    await dalamTransaksi(async (db) => {
-      await siapkanData(db);
+    it('menyembunyikan arsip kecuali diminta', async () => {
+      await dalamTransaksi(async (db) => {
+        await siapkanData(db);
+        const repository = repositoryOf(db);
 
-      const hasil = await repositoryOf(db).findPage({
-        page: 1,
-        perPage: 10,
-        category: 'kegiatan',
-        includeArchived: false,
+        const tersembunyi = await repository.findPage({
+          page: 1,
+          perPage: 50,
+          includeArchived: false,
+        });
+        const terbuka = await repository.findPage({ page: 1, perPage: 50, includeArchived: true });
+
+        expect(tersembunyi.rows.some((row) => row.slug === 'pengumuman-arsip')).toBe(false);
+        expect(terbuka.rows.some((row) => row.slug === 'pengumuman-arsip')).toBe(true);
+        expect(terbuka.total).toBe(4);
       });
-
-      expect(hasil.rows.map((row) => row.slug)).toEqual(['pensi-sekolah']);
-      expect(hasil.total).toBe(1);
     });
-  });
 
-  it('mencocokkan kata utuh dan tidak mencocokkan potongan di tengah kata', async () => {
-    await dalamTransaksi(async (db) => {
-      await siapkanData(db);
+    it('menyaring kategori tanpa mencampur kategori lain', async () => {
+      await dalamTransaksi(async (db) => {
+        await siapkanData(db);
 
-      const hasil = await repositoryOf(db).findPage({
-        page: 1,
-        perPage: 10,
-        search: 'jadwal',
-        includeArchived: false,
+        const hasil = await repositoryOf(db).findPage({
+          page: 1,
+          perPage: 10,
+          category: 'kegiatan',
+          includeArchived: false,
+        });
+
+        expect(hasil.rows.map((row) => row.slug)).toEqual(['pensi-sekolah']);
+        expect(hasil.total).toBe(1);
       });
-
-      expect(hasil.rows.map((row) => row.slug)).toEqual(['perubahan-jadwal']);
     });
-  });
 
-  it('memperlakukan tanda persen sebagai teks biasa, bukan wildcard', async () => {
-    await dalamTransaksi(async (db) => {
-      await siapkanData(db);
+    it('mencocokkan kata utuh dan tidak mencocokkan potongan di tengah kata', async () => {
+      await dalamTransaksi(async (db) => {
+        await siapkanData(db);
 
-      const hasil = await repositoryOf(db).findPage({
-        page: 1,
-        perPage: 50,
-        search: '100%',
-        includeArchived: false,
+        const hasil = await repositoryOf(db).findPage({
+          page: 1,
+          perPage: 10,
+          search: 'jadwal',
+          includeArchived: false,
+        });
+
+        expect(hasil.rows.map((row) => row.slug)).toEqual(['perubahan-jadwal']);
       });
-
-      expect(hasil.rows.map((row) => row.slug)).toEqual(['diskon-serbatus']);
     });
-  });
 
-  it('mengabaikan kata kunci yang hanya berisi tanda baca', async () => {
-    await dalamTransaksi(async (db) => {
-      await siapkanData(db);
+    it('memperlakukan tanda persen sebagai teks biasa, bukan wildcard', async () => {
+      await dalamTransaksi(async (db) => {
+        await siapkanData(db);
 
-      const hasil = await repositoryOf(db).findPage({
-        page: 1,
-        perPage: 50,
-        search: '%%%',
-        includeArchived: false,
+        const hasil = await repositoryOf(db).findPage({
+          page: 1,
+          perPage: 50,
+          search: '100%',
+          includeArchived: false,
+        });
+
+        expect(hasil.rows.map((row) => row.slug)).toEqual(['diskon-serbatus']);
       });
-
-      expect(hasil.total).toBe(3);
     });
-  });
 
-  it('menerapkan paginasi dengan total yang konsisten', async () => {
-    await dalamTransaksi(async (db) => {
-      await siapkanData(db);
-      const repository = repositoryOf(db);
+    it('mengabaikan kata kunci yang hanya berisi tanda baca', async () => {
+      await dalamTransaksi(async (db) => {
+        await siapkanData(db);
 
-      const pertama = await repository.findPage({ page: 1, perPage: 2, includeArchived: false });
-      const kedua = await repository.findPage({ page: 2, perPage: 2, includeArchived: false });
-      const ketiga = await repository.findPage({ page: 3, perPage: 2, includeArchived: false });
+        const hasil = await repositoryOf(db).findPage({
+          page: 1,
+          perPage: 50,
+          search: '%%%',
+          includeArchived: false,
+        });
 
-      expect(pertama.rows.map((row) => row.slug)).toEqual(['perubahan-jadwal', 'pensi-sekolah']);
-      expect(kedua.rows.map((row) => row.slug)).toEqual(['diskon-serbatus']);
-      expect(ketiga.rows).toEqual([]);
-      expect(ketiga.total).toBe(3);
+        expect(hasil.total).toBe(3);
+      });
     });
-  });
 
-  it('menemukan slug terbit dan arsip tetapi bukan draf', async () => {
-    await dalamTransaksi(async (db) => {
-      await siapkanData(db);
-      const repository = repositoryOf(db);
+    it('menerapkan paginasi dengan total yang konsisten', async () => {
+      await dalamTransaksi(async (db) => {
+        await siapkanData(db);
+        const repository = repositoryOf(db);
 
-      expect((await repository.findVisibleBySlug('perubahan-jadwal'))?.slug).toBe(
-        'perubahan-jadwal',
-      );
-      expect((await repository.findVisibleBySlug('pengumuman-arsip'))?.slug).toBe(
-        'pengumuman-arsip',
-      );
-      expect(await repository.findVisibleBySlug('draf-rahasia')).toBeUndefined();
+        const pertama = await repository.findPage({ page: 1, perPage: 2, includeArchived: false });
+        const kedua = await repository.findPage({ page: 2, perPage: 2, includeArchived: false });
+        const ketiga = await repository.findPage({ page: 3, perPage: 2, includeArchived: false });
+
+        expect(pertama.rows.map((row) => row.slug)).toEqual(['perubahan-jadwal', 'pensi-sekolah']);
+        expect(kedua.rows.map((row) => row.slug)).toEqual(['diskon-serbatus']);
+        expect(ketiga.rows).toEqual([]);
+        expect(ketiga.total).toBe(3);
+      });
     });
-  });
 
-  it('menolak membaca draf lewat pencarian berdasarkan id', async () => {
-    await dalamTransaksi(async (db) => {
-      await siapkanData(db);
-      const draf = await db
-        .select({ id: announcement.id })
-        .from(announcement)
-        .where(eq(announcement.slug, 'draf-rahasia'));
+    it('menemukan slug terbit dan arsip tetapi bukan draf', async () => {
+      await dalamTransaksi(async (db) => {
+        await siapkanData(db);
+        const repository = repositoryOf(db);
 
-      expect(draf[0]).toBeDefined();
-      expect(await repositoryOf(db).findVisibleById(draf[0]?.id ?? '')).toBeUndefined();
+        expect((await repository.findVisibleBySlug('perubahan-jadwal'))?.slug).toBe(
+          'perubahan-jadwal',
+        );
+        expect((await repository.findVisibleBySlug('pengumuman-arsip'))?.slug).toBe(
+          'pengumuman-arsip',
+        );
+        expect(await repository.findVisibleBySlug('draf-rahasia')).toBeUndefined();
+      });
     });
-  });
 
-  it('mencari tujuan redirect hanya untuk tipe sumber pengumuman', async () => {
-    await dalamTransaksi(async (db) => {
-      const penulisId = await siapkanData(db);
+    it('menolak membaca draf lewat pencarian berdasarkan id', async () => {
+      await dalamTransaksi(async (db) => {
+        await siapkanData(db);
+        const draf = await db
+          .select({ id: announcement.id })
+          .from(announcement)
+          .where(eq(announcement.slug, 'draf-rahasia'));
 
-      await db.insert(slugRedirect).values([
-        { oldSlug: 'slug-lama-pengumuman', resourceType: 'announcement', resourceId: penulisId },
-        { oldSlug: 'slug-lama-album', resourceType: 'album', resourceId: penulisId },
-      ]);
-
-      const repository = repositoryOf(db);
-
-      expect(await repository.findRedirectTargetId('slug-lama-pengumuman')).toBe(penulisId);
-      expect(await repository.findRedirectTargetId('slug-lama-album')).toBeUndefined();
-      expect(await repository.findRedirectTargetId('slug-tidak-ada')).toBeUndefined();
+        expect(draf[0]).toBeDefined();
+        expect(await repositoryOf(db).findVisibleById(draf[0]?.id ?? '')).toBeUndefined();
+      });
     });
-  });
-});
+
+    it('mencari tujuan redirect hanya untuk tipe sumber pengumuman', async () => {
+      await dalamTransaksi(async (db) => {
+        const penulisId = await siapkanData(db);
+
+        await db.insert(slugRedirect).values([
+          { oldSlug: 'slug-lama-pengumuman', resourceType: 'announcement', resourceId: penulisId },
+          { oldSlug: 'slug-lama-album', resourceType: 'album', resourceId: penulisId },
+        ]);
+
+        const repository = repositoryOf(db);
+
+        expect(await repository.findRedirectTargetId('slug-lama-pengumuman')).toBe(penulisId);
+        expect(await repository.findRedirectTargetId('slug-lama-album')).toBeUndefined();
+        expect(await repository.findRedirectTargetId('slug-tidak-ada')).toBeUndefined();
+      });
+    });
+  },
+);

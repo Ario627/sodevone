@@ -22,10 +22,52 @@ const FORMAT_TANGGAL_PANJANG = new Intl.DateTimeFormat('id-ID', {
   year: 'numeric',
 });
 
+const FORMAT_BAGIAN = new Intl.DateTimeFormat('id-ID', {
+  timeZone: ZONA,
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+});
+
+const FORMAT_BULAN = new Intl.DateTimeFormat('en-US', { timeZone: ZONA, month: 'numeric' });
+
+const FORMAT_TAHUN = new Intl.DateTimeFormat('en-US', { timeZone: ZONA, year: 'numeric' });
+
+const AWAL_TAHUN_AJARAN = 7;
+
+const BAGIAN_KOSONG = { hari: '--', bulan: '---', tahun: '----' };
+
 function waktuOf(iso: string): Date | undefined {
   const waktu = new Date(iso);
 
   return Number.isNaN(waktu.getTime()) ? undefined : waktu;
+}
+
+export function hariBulan(iso: string): { hari: string; bulan: string; tahun: string } {
+  const waktu = waktuOf(iso);
+
+  if (waktu === undefined) {
+    return BAGIAN_KOSONG;
+  }
+
+  const potongan = FORMAT_BAGIAN.formatToParts(waktu);
+
+  const ambil = (tipe: Intl.DateTimeFormatPartTypes): string =>
+    potongan.find((bagian) => bagian.type === tipe)?.value ?? '';
+
+  return {
+    hari: ambil('day'),
+    bulan: ambil('month').replace('.', '').toUpperCase(),
+    tahun: ambil('year'),
+  };
+}
+
+export function tahunAjaran(referensi: Date = new Date()): string {
+  const bulan = Number(FORMAT_BULAN.format(referensi));
+
+  const tahun = Number(FORMAT_TAHUN.format(referensi));
+
+  return bulan >= AWAL_TAHUN_AJARAN ? `${tahun}/${tahun + 1}` : `${tahun - 1}/${tahun}`;
 }
 
 export function jamTeks(iso: string): string {

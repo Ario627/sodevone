@@ -1,10 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type {
-  EventCollection,
-  EventDetail,
-  EventSummary,
-  PublishedState,
-} from '@kelas/contracts';
+import type { EventCollection, EventDetail, EventSummary, PublishedState } from '@kelas/contracts';
 import { toIsoInstant, toIsoInstantOrNull } from '../common/text/instant.js';
 import { EventRepository } from './event.repository.js';
 import type { EventPublicRow } from './event.repository.js';

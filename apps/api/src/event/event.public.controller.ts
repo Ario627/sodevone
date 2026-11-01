@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Header,
-  HttpStatus,
-  NotFoundException,
-  Param,
-  Res,
-} from '@nestjs/common';
+import { Controller, Get, Header, HttpStatus, NotFoundException, Param, Res } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { SlugSchema, type EventCollection, type EventDetail } from '@kelas/contracts';
 import type { Response } from 'express';

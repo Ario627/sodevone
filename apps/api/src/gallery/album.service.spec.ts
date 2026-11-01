@@ -129,7 +129,9 @@ describe('AlbumService.list', () => {
   });
 
   it('menolak album publik tanpa tanggal terbit', async () => {
-    const findPage = vi.fn().mockResolvedValue({ rows: [albumOf({ publishedAt: null })], total: 1 });
+    const findPage = vi
+      .fn()
+      .mockResolvedValue({ rows: [albumOf({ publishedAt: null })], total: 1 });
 
     await expect(
       buatService({

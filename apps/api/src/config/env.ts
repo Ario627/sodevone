@@ -23,6 +23,13 @@ export const EnvSchema = z.object({
   DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(50).default(10),
   DATABASE_STATEMENT_TIMEOUT_MS: z.coerce.number().int().min(100).max(120_000).default(15_000),
   MEDIA_ROOT: z.string().min(1).max(400).default('storage'),
+  APP_SECRET: z
+    .string()
+    .min(32, 'APP_SECRET minimal 32 karakter acak')
+    .max(200)
+    .default('kelas-dev-secret-jangan-dipakai-di-produksi'),
+  SESSION_TTL_HOURS: z.coerce.number().int().min(1).max(72).default(12),
+  COOKIE_SECURE: z.enum(['auto', 'always', 'never']).default('auto'),
 });
 
 export type Env = z.infer<typeof EnvSchema>;
@@ -49,6 +56,28 @@ export function corsOrigins(raw: string): string[] {
 
 export function databaseSsl(mode: Env['DATABASE_SSL']): false | 'require' {
   return mode === 'require' ? 'require' : false;
+}
+
+export function cookieSecure(mode: Env['COOKIE_SECURE'], nodeEnv: Env['NODE_ENV']): boolean {
+  if (mode === 'always') {
+    return true;
+  }
+
+  if (mode === 'never') {
+    return false;
+  }
+
+  return nodeEnv === 'production';
+}
+
+export function assertProductionSecrets(env: Env): void {
+  if (env.NODE_ENV !== 'production') {
+    return;
+  }
+
+  if (env.APP_SECRET.startsWith('kelas-dev-secret')) {
+    throw new Error('APP_SECRET wajib diganti pada lingkungan produksi');
+  }
 }
 
 let cachedEnv: Env | undefined;

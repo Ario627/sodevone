@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, inject, signal } from '@angular/core';
-import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
+import { tahunAjaran } from './inti/format/tanggal';
 
 const TAUTAN_NAVIGASI = [
   { label: 'Beranda', jalur: '/', tepat: true },
@@ -27,6 +28,7 @@ export class App {
 
   protected readonly namaKelas = signal('Kelas XI PPLG 1');
   protected readonly tautanNavigasi = TAUTAN_NAVIGASI;
+  protected readonly tahun = tahunAjaran();
 
   constructor() {
     this.router.events

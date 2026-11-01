@@ -168,10 +168,7 @@ async function siapkanData(db: Database): Promise<Kontekst> {
     .sort((a, b) => a.storageKey.localeCompare(b.storageKey))
     .map((row) => row.id);
 
-  await db
-    .update(galleryAlbum)
-    .set({ coverImageId: urut[0] })
-    .where(eq(galleryAlbum.id, pensi.id));
+  await db.update(galleryAlbum).set({ coverImageId: urut[0] }).where(eq(galleryAlbum.id, pensi.id));
 
   return { penulisId, albumId: pensi.id, fotoIds: urut };
 }
@@ -216,9 +213,7 @@ describe.skipIf(DATABASE_URL === undefined)('AlbumRepository dengan basis data n
       const hasil = await repositoryOf(db).findPage(1, 12);
       const pensi = hasil.rows.find((row) => row.slug === 'pensi-2026');
 
-      const jumlah = await repositoryOf(db).countImages(
-        pensi === undefined ? [] : [pensi.id],
-      );
+      const jumlah = await repositoryOf(db).countImages(pensi === undefined ? [] : [pensi.id]);
 
       expect(pensi === undefined ? -1 : jumlah.get(pensi.id)).toBe(3);
     });
@@ -231,9 +226,7 @@ describe.skipIf(DATABASE_URL === undefined)('AlbumRepository dengan basis data n
       const hasil = await repositoryOf(db).findPage(1, 12);
       const ldks = hasil.rows.find((row) => row.slug === 'ldks-2026');
 
-      const jumlah = await repositoryOf(db).countImages(
-        ldks === undefined ? [] : [ldks.id],
-      );
+      const jumlah = await repositoryOf(db).countImages(ldks === undefined ? [] : [ldks.id]);
 
       expect(jumlah.get(ldks?.id ?? '') ?? 0).toBe(0);
     });

@@ -21,7 +21,7 @@ import type { Response } from 'express';
 import { PUBLIC_READ_CACHE } from '../common/http/cache-control.js';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe.js';
 import { AlbumService } from './album.service.js';
-import type { AlbumPage } from './album.service.js';
+import type { AlbumPage } from '@kelas/contracts';
 
 @ApiTags('galeri')
 @Controller('api/public/albums')

@@ -1,0 +1,188 @@
+@if (tidakDitemukan()) {
+  <section class="max-w-[34rem]">
+    <p class="teks-meta text-sinyal">Galat 404</p>
+    <h1 class="mt-4 font-serif text-3xl tracking-[-0.02em]">Album tidak ditemukan</h1>
+    <p class="mt-4 text-md text-teks-kuat-sekunder">
+      Album ini tidak tersedia atau sudah tidak dipublikasikan.
+    </p>
+    <a
+      routerLink="/galeri"
+      class="mt-8 inline-flex min-h-11 items-center gap-2 border-b border-garis-tegas text-sm transition-colors duration-100 ease-keluar hover:border-sinyal hover:text-sinyal"
+    >
+      <span aria-hidden="true">&larr;</span> Semua album
+    </a>
+  </section>
+} @else if (sedangMemuat()) {
+  <kelas-memuat pesan="Memuat album" [jumlah]="2" />
+} @else if (galat(); as kegagalan) {
+  <kelas-galat-muat
+    [pesan]="kegagalan.message"
+    [korelasi]="kegagalan.correlationId"
+    (cobaLagi)="muatUlang()"
+  />
+} @else if (data(); as album) {
+  <nav aria-label="Remah" class="teks-meta text-teks-sekunder">
+    <ol class="flex flex-wrap items-center gap-2">
+      <li><a routerLink="/" class="hover:text-teks-utama">Beranda</a></li>
+      <li aria-hidden="true">/</li>
+      <li><a routerLink="/galeri" class="hover:text-teks-utama">Galeri</a></li>
+      <li aria-hidden="true">/</li>
+      <li aria-current="page" class="max-w-[18rem] truncate text-teks-utama">{{ album.title }}</li>
+    </ol>
+  </nav>
+
+  <header class="mt-8 border-b border-garis-halus pb-8">
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+      <time [attr.datetime]="album.eventDate" class="teks-meta text-sinyal">
+        {{ tanggalTeks(album.eventDate) }}
+      </time>
+      <span class="teks-meta text-teks-sekunder">{{ album.imageCount }} foto</span>
+      @if (album.state === 'archived') {
+        <span class="teks-meta border border-garis-tegas px-2 py-0.5">Arsip</span>
+      }
+    </div>
+
+    <h1
+      class="mt-4 font-serif text-[clamp(1.75rem,4.5vw,2.75rem)] leading-[1.05] tracking-[-0.03em]"
+    >
+      {{ album.title }}
+    </h1>
+
+    @if (album.description; as keterangan) {
+      <p class="prosa mt-4 max-w-[52ch]">{{ keterangan }}</p>
+    }
+  </header>
+
+  @if (kosong()) {
+    <kelas-kosong
+      class="mt-10"
+      judul="Album ini belum berisi foto"
+      pesan="Pengurus akan menambahkan dokumentasi setelah kegiatan selesai."
+      tautan="/galeri"
+      labelTautan="Album lain"
+    />
+  } @else {
+    <ul class="mt-8 grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4">
+      @for (foto of foto(); track foto.id; let indeks = $index) {
+        <li>
+          <button
+            type="button"
+            class="group block w-full text-left"
+            [attr.aria-label]="label(foto)"
+            (click)="buka(indeks, $event)"
+          >
+            <span class="block border border-garis-halus bg-latar-sekunder">
+              <img
+                [src]="sumberFoto(foto.id, 'kecil')"
+                [attr.srcset]="srcsetFoto(foto.id)"
+                sizes="(min-width: 64rem) 20rem, (min-width: 40rem) 28vw, 44vw"
+                [attr.width]="foto.width"
+                [attr.height]="foto.height"
+                [attr.alt]="teksAlternatif(foto)"
+                [attr.loading]="indeks === 0 ? 'eager' : 'lazy'"
+                [attr.fetchpriority]="indeks === 0 ? 'high' : undefined"
+                decoding="async"
+                class="aspect-square w-full object-cover transition-opacity duration-150 ease-keluar group-hover:opacity-90 motion-reduce:transition-none"
+              />
+            </span>
+            <span class="teks-meta mt-2 block text-teks-sekunder">{{ nomorTeks(foto.nomor) }}</span>
+          </button>
+        </li>
+      }
+    </ul>
+
+    @if (album.images.meta.totalPages > 1) {
+      <nav
+        aria-label="Navigasi halaman"
+        class="mt-12 flex items-center justify-between gap-4 border-t border-garis-halus pt-5"
+      >
+        <div class="min-w-28">
+          @if (tautanMundur(); as sebelumnya) {
+            <a
+              [routerLink]="['/galeri', album.slug]"
+              [queryParams]="sebelumnya"
+              rel="prev"
+              class="inline-flex min-h-11 items-center gap-2 text-sm transition-colors duration-100 ease-keluar hover:text-sinyal"
+            >
+              <span aria-hidden="true">&larr;</span> Sebelumnya
+            </a>
+          }
+        </div>
+
+        <p class="teks-meta text-teks-sekunder">{{ ringkasanHalaman() }}</p>
+
+        <div class="flex min-w-28 justify-end">
+          @if (tautanMaju(); as berikutnya) {
+            <a
+              [routerLink]="['/galeri', album.slug]"
+              [queryParams]="berikutnya"
+              rel="next"
+              class="inline-flex min-h-11 items-center gap-2 text-sm transition-colors duration-100 ease-keluar hover:text-sinyal"
+            >
+              Berikutnya <span aria-hidden="true">&rarr;</span>
+            </a>
+          }
+        </div>
+      </nav>
+    }
+  }
+
+  @if (tampil(); as aktif) {
+    <div
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="label(aktif)"
+      class="fixed inset-0 z-50 flex flex-col bg-latar-tirai text-batu-50"
+    >
+      <div class="flex items-center justify-between gap-4 border-b border-white/10 px-5 py-3 sm:px-8">
+        <p class="teks-meta">{{ nomorTeks(aktif.nomor) }} / {{ totalFoto() }}</p>
+        <button
+          #tombolTutup
+          type="button"
+          (click)="tutup()"
+          class="min-h-11 border-b border-white/30 px-1 text-sm transition-colors duration-100 ease-keluar hover:border-white"
+        >
+          Tutup
+        </button>
+      </div>
+
+      <div class="flex min-h-0 flex-1 items-center justify-center p-4 sm:p-8" (click)="tutup()">
+        <img
+          [src]="sumberFoto(aktif.id, 'sedang')"
+          [attr.srcset]="srcsetFoto(aktif.id)"
+          sizes="(min-width: 64rem) 60rem, 92vw"
+          [attr.width]="aktif.width"
+          [attr.height]="aktif.height"
+          [attr.alt]="teksAlternatif(aktif)"
+          decoding="async"
+          class="max-h-full max-w-full object-contain outline outline-white/15"
+          (click)="$event.stopPropagation()"
+        />
+      </div>
+
+      <div class="flex items-center justify-between gap-4 border-t border-white/10 px-5 py-3 sm:px-8">
+        <button
+          type="button"
+          (click)="sebelumnya()"
+          [disabled]="!adaSebelumnya()"
+          class="min-h-11 pr-3 text-sm transition-colors duration-100 ease-keluar hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <span aria-hidden="true">&larr;</span> Sebelumnya
+        </button>
+
+        <p class="teks-meta hidden max-w-[32rem] truncate text-batu-300 sm:block">
+          {{ teksAlternatif(aktif) }}
+        </p>
+
+        <button
+          type="button"
+          (click)="berikutnya()"
+          [disabled]="!adaBerikutnya()"
+          class="min-h-11 pl-3 text-sm transition-colors duration-100 ease-keluar hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Berikutnya <span aria-hidden="true">&rarr;</span>
+        </button>
+      </div>
+    </div>
+  }
+}

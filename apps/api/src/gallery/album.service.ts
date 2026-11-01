@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type {
   AlbumDetail,
   AlbumDetailQuery,
+  AlbumPage,
   AlbumSummary,
   GalleryImage,
   PaginationMeta,
@@ -10,8 +11,6 @@ import type {
 import { toIsoInstant } from '../common/text/instant.js';
 import { AlbumRepository } from './album.repository.js';
 import type { AlbumImageRow, AlbumPublicRow } from './album.repository.js';
-
-export type AlbumPage = { items: AlbumSummary[]; meta: PaginationMeta };
 
 export type AlbumLookup =
   | { kind: 'found'; detail: AlbumDetail }

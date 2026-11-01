@@ -80,9 +80,7 @@ export class EventRepository {
     const rows = await this.database.db
       .select({ resourceId: slugRedirect.resourceId })
       .from(slugRedirect)
-      .where(
-        and(eq(slugRedirect.oldSlug, slug), eq(slugRedirect.resourceType, EVENT_RESOURCE)),
-      )
+      .where(and(eq(slugRedirect.oldSlug, slug), eq(slugRedirect.resourceType, EVENT_RESOURCE)))
       .limit(1);
 
     return rows[0]?.resourceId;

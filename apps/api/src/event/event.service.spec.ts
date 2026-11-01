@@ -90,9 +90,7 @@ describe('EventService.detail', () => {
   it('melaporkan slug lama sebagai pindah ke slug baru', async () => {
     const findVisibleBySlug = vi.fn().mockResolvedValue(undefined);
     const findRedirectTargetId = vi.fn().mockResolvedValue('a1b2c3d4-1111-4222-8333-444455556666');
-    const findVisibleById = vi
-      .fn()
-      .mockResolvedValue(rowOf({ slug: 'kerja-bakti-baru' }));
+    const findVisibleById = vi.fn().mockResolvedValue(rowOf({ slug: 'kerja-bakti-baru' }));
 
     const hasil = await buatService({
       findVisibleBySlug,

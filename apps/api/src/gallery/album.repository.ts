@@ -91,9 +91,7 @@ export class AlbumRepository {
     const rows = await this.database.db
       .select(ALBUM_COLUMNS)
       .from(galleryAlbum)
-      .where(
-        and(eq(galleryAlbum.slug, slug), inArray(galleryAlbum.status, [...VISIBLE_STATUSES])),
-      )
+      .where(and(eq(galleryAlbum.slug, slug), inArray(galleryAlbum.status, [...VISIBLE_STATUSES])))
       .limit(1);
 
     return rows[0];

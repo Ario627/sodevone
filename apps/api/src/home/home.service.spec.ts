@@ -77,11 +77,7 @@ describe('HomeService', () => {
 
     const hasil = await service.overview();
 
-    expect(hasil.albums.map((item) => item.slug)).toEqual([
-      'paling-baru',
-      'berikutnya',
-      'ketiga',
-    ]);
+    expect(hasil.albums.map((item) => item.slug)).toEqual(['paling-baru', 'berikutnya', 'ketiga']);
   });
 
   it('mengirim hasil kosong sebagai larik kosong, bukan null', async () => {
@@ -104,7 +100,9 @@ describe('HomeService', () => {
 
     const service = new HomeService(
       { list } as unknown as AnnouncementService,
-      { collection: vi.fn().mockResolvedValue({ upcoming: [], past: [] } as EventCollection) } as unknown as EventService,
+      {
+        collection: vi.fn().mockResolvedValue({ upcoming: [], past: [] } as EventCollection),
+      } as unknown as EventService,
       { latest: vi.fn().mockResolvedValue([]) } as unknown as AlbumService,
     );
 
@@ -123,9 +121,7 @@ describe('HomeService', () => {
           .mockResolvedValue({ items: [], meta: { page: 1, perPage: 5, total: 0, totalPages: 0 } }),
       } as unknown as AnnouncementService,
       {
-        collection: vi
-          .fn()
-          .mockResolvedValue({ upcoming: [], past: [] } as EventCollection),
+        collection: vi.fn().mockResolvedValue({ upcoming: [], past: [] } as EventCollection),
       } as unknown as EventService,
       { latest } as unknown as AlbumService,
     );

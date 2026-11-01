@@ -116,10 +116,7 @@ export class AnnouncementRepository {
       .select({ resourceId: slugRedirect.resourceId })
       .from(slugRedirect)
       .where(
-        and(
-          eq(slugRedirect.oldSlug, slug),
-          eq(slugRedirect.resourceType, ANNOUNCEMENT_RESOURCE),
-        ),
+        and(eq(slugRedirect.oldSlug, slug), eq(slugRedirect.resourceType, ANNOUNCEMENT_RESOURCE)),
       )
       .limit(1);
 

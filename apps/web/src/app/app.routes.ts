@@ -29,13 +29,24 @@ export const routes: Routes = [
     title: 'Agenda — Kelas XI PPLG 1',
   },
   {
+    path: 'galeri',
+    loadComponent: () => import('./fitur/galeri/daftar-galeri').then((m) => m.DaftarGaleri),
+    title: 'Galeri — Kelas XI PPLG 1',
+  },
+  {
+    path: 'galeri/:slug',
+    loadComponent: () => import('./fitur/galeri/detail-galeri').then((m) => m.DetailGaleri),
+    title: 'Galeri — Kelas XI PPLG 1',
+  },
+  {
     path: 'tentang',
     loadComponent: () => import('./fitur/tentang/tentang').then((m) => m.Tentang),
     title: 'Tentang — Kelas XI PPLG 1',
   },
   {
     path: '**',
-    loadComponent: () => import('./fitur/tidak-ditemukan/tidak-ditemukan').then((m) => m.TidakDitemukan),
+    loadComponent: () =>
+      import('./fitur/tidak-ditemukan/tidak-ditemukan').then((m) => m.TidakDitemukan),
     title: 'Halaman tidak ditemukan — Kelas XI PPLG 1',
   },
 ];

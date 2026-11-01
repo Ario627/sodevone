@@ -3,29 +3,20 @@ import {
   type AnnouncementCategory,
   type AnnouncementListQuery,
 } from '@kelas/contracts';
+import { halamanDari } from './halaman';
+
+export { halamanDari };
 
 export const PER_HALAMAN = 10;
 
 const HALAMAN_MINIMUM = 1;
 
-const HALAMAN_MAKSIMUM = 1000;
-
 const PANJANG_KATA_KUNCI = 120;
-
-const POLA_HALAMAN = /^[0-9]{1,4}$/;
 
 export function kategoriDari(nilai: string | undefined): AnnouncementCategory | undefined {
   const terbaca = AnnouncementCategorySchema.safeParse(nilai);
 
   return terbaca.success ? terbaca.data : undefined;
-}
-
-export function halamanDari(nilai: string | undefined): number {
-  if (nilai === undefined || !POLA_HALAMAN.test(nilai)) {
-    return HALAMAN_MINIMUM;
-  }
-
-  return Math.min(Math.max(Number.parseInt(nilai, 10), HALAMAN_MINIMUM), HALAMAN_MAKSIMUM);
 }
 
 export function kataKunciDari(nilai: string | undefined): string | undefined {
