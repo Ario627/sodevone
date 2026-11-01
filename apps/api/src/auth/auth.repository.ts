@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { and, eq, isNull } from 'drizzle-orm';
 import { DatabaseService } from '../db/database.service.js';
+import type { Executor } from '../db/executor.js';
 import { adminSession } from '../db/schema/admin-session.js';
 import { adminUser } from '../db/schema/admin-user.js';
 
@@ -103,7 +104,11 @@ export class AuthRepository {
   }
 
   async revokeSessionsOfUser(userId: string, at: string): Promise<void> {
-    await this.database.db
+    await this.revokeSessionsOfUserWithin(this.database.db, userId, at);
+  }
+
+  async revokeSessionsOfUserWithin(exec: Executor, userId: string, at: string): Promise<void> {
+    await exec
       .update(adminSession)
       .set({ revokedAt: at })
       .where(and(eq(adminSession.userId, userId), isNull(adminSession.revokedAt)));

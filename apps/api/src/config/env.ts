@@ -30,6 +30,11 @@ export const EnvSchema = z.object({
     .default('kelas-dev-secret-jangan-dipakai-di-produksi'),
   SESSION_TTL_HOURS: z.coerce.number().int().min(1).max(72).default(12),
   COOKIE_SECURE: z.enum(['auto', 'always', 'never']).default('auto'),
+  LOGIN_FAILURE_LIMIT: z.coerce.number().int().min(1).max(100).default(5),
+  LOGIN_FAILURE_WINDOW_MINUTES: z.coerce.number().int().min(1).max(1440).default(15),
+  LOGIN_IP_FAILURE_LIMIT: z.coerce.number().int().min(1).max(1000).default(30),
+  PASSWORD_BREACH_CHECK: z.enum(['enabled', 'disabled']).default('enabled'),
+  PASSWORD_BREACH_TIMEOUT_MS: z.coerce.number().int().min(200).max(10_000).default(2_500),
 });
 
 export type Env = z.infer<typeof EnvSchema>;
@@ -43,6 +48,8 @@ export function parseEnv(raw: Record<string, unknown>): Env {
     );
     throw new Error(`Konfigurasi environment tidak valid\n${lines.join('\n')}`);
   }
+
+  assertProductionSecrets(result.data);
 
   return result.data;
 }
@@ -77,6 +84,14 @@ export function assertProductionSecrets(env: Env): void {
 
   if (env.APP_SECRET.startsWith('kelas-dev-secret')) {
     throw new Error('APP_SECRET wajib diganti pada lingkungan produksi');
+  }
+
+  if (env.APP_SECRET.startsWith('contoh-')) {
+    throw new Error('APP_SECRET masih memakai nilai contoh dari .env.example');
+  }
+
+  if (env.COOKIE_SECURE === 'never') {
+    throw new Error('COOKIE_SECURE tidak boleh never pada lingkungan produksi');
   }
 }
 

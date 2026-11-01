@@ -1,5 +1,11 @@
 import { z } from 'zod';
-import { IsoDateTimeSchema, UuidSchema } from './common.js';
+import { IsoDateTimeSchema, UuidSchema, paginatedSchema } from './common.js';
+import {
+  BooleanQuerySchema,
+  PageParamSchema,
+  PerPageAdminSchema,
+  SearchQuerySchema,
+} from './query.js';
 
 export const AdminRoleSchema = z.enum(['admin', 'editor']);
 
@@ -71,3 +77,17 @@ export const AdminUserUpdateSchema = z
   .refine((value) => Object.keys(value).length > 0, 'Tidak ada perubahan yang dikirim');
 
 export type AdminUserUpdate = z.infer<typeof AdminUserUpdateSchema>;
+
+export const AdminUserListQuerySchema = z.strictObject({
+  page: PageParamSchema,
+  perPage: PerPageAdminSchema,
+  role: AdminRoleSchema.optional(),
+  aktif: BooleanQuerySchema.optional(),
+  q: SearchQuerySchema.optional(),
+});
+
+export type AdminUserListQuery = z.infer<typeof AdminUserListQuerySchema>;
+
+export const AdminUserPageSchema = paginatedSchema(AdminUserSchema);
+
+export type AdminUserPage = z.infer<typeof AdminUserPageSchema>;

@@ -10,6 +10,7 @@ export const AUDIT_ACTIONS = [
   'publish',
   'archive',
   'restore',
+  'unpublish',
   'delete',
   'upload',
   'login_success',

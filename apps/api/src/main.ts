@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import type { NestExpressApplication } from '@nestjs/platform-express';
+import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { Logger as PinoLogger } from 'nestjs-pino';
 import { AppModule } from './app.module.js';
@@ -26,6 +27,7 @@ async function bootstrap(): Promise<void> {
   app.useLogger(app.get(PinoLogger));
   app.disable('x-powered-by');
   app.set('trust proxy', env.TRUST_PROXY_HOPS);
+  app.use(cookieParser());
   app.useBodyParser('json', { limit: JSON_BODY_LIMIT });
   app.use(
     helmet({

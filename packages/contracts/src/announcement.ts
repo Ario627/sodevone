@@ -71,12 +71,27 @@ export const AnnouncementAdminSchema = z.object({
   status: AnnouncementStatusSchema,
   authorId: UuidSchema,
   authorName: z.string().min(1).max(120),
+  version: z.number().int().min(1),
   publishedAt: IsoDateTimeSchema.nullable(),
   createdAt: IsoDateTimeSchema,
   updatedAt: IsoDateTimeSchema,
 });
 
 export type AnnouncementAdmin = z.infer<typeof AnnouncementAdminSchema>;
+
+export const AnnouncementAdminDetailSchema = AnnouncementAdminSchema.extend({
+  bodyHtml: z.string().min(1),
+});
+
+export type AnnouncementAdminDetail = z.infer<typeof AnnouncementAdminDetailSchema>;
+
+export const AnnouncementAdminListSchema = AnnouncementAdminSchema.omit({ body: true });
+
+export type AnnouncementAdminList = z.infer<typeof AnnouncementAdminListSchema>;
+
+export const AnnouncementAdminPageSchema = paginatedSchema(AnnouncementAdminListSchema);
+
+export type AnnouncementAdminPage = z.infer<typeof AnnouncementAdminPageSchema>;
 
 export const AnnouncementCreateSchema = z.strictObject({
   title: AnnouncementTitleSchema,

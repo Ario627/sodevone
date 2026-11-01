@@ -3,15 +3,19 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
-import type { Env } from './config/env.js';
-import { parseEnv } from './config/env.js';
+import { AdminUserModule } from './admin-user/admin-user.module.js';
 import { AnnouncementModule } from './announcement/announcement.module.js';
+import { AuditAdminModule } from './audit/audit-admin.module.js';
+import { AuthModule } from './auth/auth.module.js';
+import { OriginGuard } from './common/guards/origin.guard.js';
 import { DatabaseModule } from './db/database.module.js';
 import { EventModule } from './event/event.module.js';
 import { GalleryModule } from './gallery/gallery.module.js';
 import { HealthModule } from './health/health.module.js';
 import { HomeModule } from './home/home.module.js';
 import { MediaModule } from './media/media.module.js';
+import type { Env } from './config/env.js';
+import { parseEnv } from './config/env.js';
 
 @Module({
   imports: [
@@ -58,11 +62,18 @@ import { MediaModule } from './media/media.module.js';
     MediaModule,
     HomeModule,
     HealthModule,
+    AuthModule,
+    AdminUserModule,
+    AuditAdminModule,
   ],
   providers: [
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: OriginGuard,
     },
   ],
 })

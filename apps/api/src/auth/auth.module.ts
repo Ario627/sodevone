@@ -10,6 +10,6 @@ import { LoginThrottle } from './login-throttle.js';
   imports: [AuditModule],
   controllers: [AuthController],
   providers: [AuthRepository, AuthService, LoginThrottle, AuthGuard, RolesGuard],
-  exports: [AuthService, AuthGuard, RolesGuard],
+  exports: [AuthService, AuthRepository, AuthGuard, RolesGuard],
 })
 export class AuthModule {}

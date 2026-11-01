@@ -15,7 +15,7 @@ import { ConfigService } from '@nestjs/config';
 import { ApiCookieAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { LoginRequestSchema, type LoginRequest, type SessionResponse } from '@kelas/contracts';
 import type { Request, Response } from 'express';
-import { CORRELATION_ID_HEADER } from '../common/interceptors/correlation-id.interceptor.js';
+import { requestContextOf } from '../common/http/request-context.js';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe.js';
 import type { Env } from '../config/env.js';
 import { cookieSecure } from '../config/env.js';
@@ -28,27 +28,10 @@ import {
   setSessionCookie,
   type CookiePolicy,
 } from './session-cookie.js';
-import { hashIp } from './token.js';
 
 const NO_STORE = 'no-store';
 
-const MAX_USER_AGENT_LENGTH = 255;
-
-const MAX_CORRELATION_LENGTH = 64;
-
 const SECONDS_PER_MINUTE = 60;
-
-function contextOf(request: Request): LoginContext {
-  const userAgent = request.headers['user-agent'];
-  const correlationId = request.headers[CORRELATION_ID_HEADER];
-
-  return {
-    ipHash: hashIp(request.ip),
-    userAgent: typeof userAgent === 'string' ? userAgent.slice(0, MAX_USER_AGENT_LENGTH) : null,
-    correlationId:
-      typeof correlationId === 'string' ? correlationId.slice(0, MAX_CORRELATION_LENGTH) : null,
-  };
-}
 
 function throttleMessageOf(retryAfterSeconds: number): string {
   const minutes = Math.max(1, Math.ceil(retryAfterSeconds / SECONDS_PER_MINUTE));
@@ -73,6 +56,10 @@ export class AuthController {
     };
   }
 
+  private contextOf(request: Request): LoginContext {
+    return requestContextOf(request, this.config.get('APP_SECRET', { infer: true }));
+  }
+
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @Header('Cache-Control', NO_STORE)
@@ -83,7 +70,7 @@ export class AuthController {
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ): Promise<SessionResponse> {
-    const outcome = await this.service.login(body, contextOf(request));
+    const outcome = await this.service.login(body, this.contextOf(request));
 
     if (outcome.kind === 'throttled') {
       response.setHeader('Retry-After', String(outcome.retryAfterSeconds));
@@ -120,7 +107,7 @@ export class AuthController {
       const session = await this.service.resolveSession(token);
 
       if (session !== undefined) {
-        await this.service.logout(session, contextOf(request));
+        await this.service.logout(session, this.contextOf(request));
       }
     }
 

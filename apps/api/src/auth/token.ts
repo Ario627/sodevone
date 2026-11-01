@@ -13,11 +13,3 @@ export function createSessionToken(): string {
 export function hashSessionToken(token: string): string {
   return sha256Hex(token);
 }
-
-export function hashIp(ip: string | undefined): string | null {
-  if (ip === undefined || ip.length === 0) {
-    return null;
-  }
-
-  return sha256Hex(ip);
-}
