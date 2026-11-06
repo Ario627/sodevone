@@ -7,16 +7,45 @@ const MIGRATION_DIRECTORY = path.join(import.meta.dirname, 'migrations');
 
 const MIGRATION_FILE = /^\d{4}_[a-z0-9_]+\.sql$/;
 
+const MIGRATION_PREFIX = /^(\d{4})_/;
+
 const ADVISORY_LOCK_KEY = 8_412_119;
 
 const LEDGER_TABLE = 'migration_ledger';
 
 type MigrationFile = { name: string; checksum: string; body: string };
 
+function assertUniquePrefixes(names: string[]): void {
+  const seen = new Map<string, string>();
+
+  for (const name of names) {
+    const prefix = MIGRATION_PREFIX.exec(name)?.[1];
+
+    if (prefix === undefined) {
+      continue;
+    }
+
+    const previous = seen.get(prefix);
+
+    if (previous !== undefined) {
+      throw new Error(
+        `Migrasi ${name} memakai nomor urut ${prefix} yang sama dengan ${previous}. ` +
+          'Nomor urut harus unik; jangan jalankan drizzle-kit generate di direktori ini.',
+      );
+    }
+
+    seen.set(prefix, name);
+  }
+}
+
 async function listMigrationFiles(): Promise<string[]> {
   const entries = await readdir(MIGRATION_DIRECTORY);
 
-  return entries.filter((entry) => MIGRATION_FILE.test(entry)).sort();
+  const names = entries.filter((entry) => MIGRATION_FILE.test(entry)).sort();
+
+  assertUniquePrefixes(names);
+
+  return names;
 }
 
 function checksumOf(body: string): string {

@@ -48,7 +48,7 @@ async function bootstrap(): Promise<void> {
 
   if (env.NODE_ENV !== 'production') {
     const documentConfig = new DocumentBuilder()
-      .setTitle('API Website Kelas XI PPLG 1')
+      .setTitle('API Website  XI PPLG 1')
       .setDescription(
         'Kontrak layanan untuk situs kelas. Dokumen ini dihasilkan dari dekorator controller.',
       )

@@ -1,5 +1,11 @@
 import { z } from 'zod';
-import { IsoDateTimeSchema, PublishedStateSchema, SlugSchema, UuidSchema } from './common.js';
+import {
+  IsoDateTimeSchema,
+  PublishedStateSchema,
+  SlugSchema,
+  UuidSchema,
+  paginatedSchema,
+} from './common.js';
 import { PageParamSchema, PerPageAdminSchema } from './query.js';
 
 export const EventStatusSchema = z.enum(['draft', 'published', 'archived']);
@@ -46,11 +52,20 @@ export const EventAdminSchema = z.object({
   endsAt: IsoDateTimeSchema.nullable(),
   status: EventStatusSchema,
   authorName: z.string().min(1).max(120),
+  version: z.number().int().min(1),
   createdAt: IsoDateTimeSchema,
   updatedAt: IsoDateTimeSchema,
 });
 
 export type EventAdmin = z.infer<typeof EventAdminSchema>;
+
+export const EventAdminListSchema = EventAdminSchema.omit({ description: true });
+
+export type EventAdminList = z.infer<typeof EventAdminListSchema>;
+
+export const EventAdminPageSchema = paginatedSchema(EventAdminListSchema);
+
+export type EventAdminPage = z.infer<typeof EventAdminPageSchema>;
 
 export const EventCreateSchema = z
   .strictObject({

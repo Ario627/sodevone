@@ -9,6 +9,7 @@ import {
   srcsetSampul,
   sumberSampul,
 } from '../../inti/api/galeri.api';
+import { nomorUrut } from '../../inti/format/label';
 import { tanggalTeks } from '../../inti/format/tanggal';
 import { GALERI_PER_HALAMAN, halamanDari, tautanAlbum } from '../../inti/query/galeri';
 import { GalatMuat } from '../../komponen/galat-muat/galat-muat';
@@ -48,6 +49,7 @@ export class DaftarGaleri {
   });
 
   protected readonly tanggalTeks = tanggalTeks;
+  protected readonly nomorUrut = nomorUrut;
   protected readonly sumberSampul = sumberSampul;
   protected readonly srcsetSampul = srcsetSampul;
 

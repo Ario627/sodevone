@@ -1,7 +1,5 @@
 <header class="border-b border-garis-halus pb-8">
-  <h1 class="font-serif text-[clamp(2rem,5vw,2.75rem)] leading-[1] tracking-[-0.03em]">
-    Agenda
-  </h1>
+  <h1 class="font-serif text-[clamp(2rem,5vw,2.75rem)] leading-[1] tracking-[-0.03em]">Agenda</h1>
   <p class="mt-3 max-w-[40ch] text-sm text-teks-kuat-sekunder">
     Kegiatan yang sudah dijadwalkan beserta waktu dan lokasinya.
   </p>
@@ -27,18 +25,25 @@
 } @else if (data(); as koleksi) {
   @if (koleksi.upcoming.length > 0) {
     <section aria-labelledby="mendatang-judul" class="mt-10">
-      <kelas-kepala-bagian nomor="01" judul="Mendatang" judulId="mendatang-judul" />
+      <kelas-kepala-bagian
+        nomor="01"
+        judul="Mendatang"
+        judulId="mendatang-judul"
+        [jumlah]="koleksi.upcoming.length + ' kegiatan'"
+      />
 
       <ol class="mt-4 border-t border-garis-halus">
         @for (kegiatan of koleksi.upcoming; track kegiatan.slug) {
           <li class="border-b border-garis-halus">
             <a
               [routerLink]="['/agenda', kegiatan.slug]"
-              class="group grid grid-cols-[4rem_minmax(0,1fr)] items-start gap-4 py-5 sm:gap-6"
+              class="group grid grid-cols-[4rem_minmax(0,1fr)] items-start gap-4 py-5 sm:gap-0"
             >
-              <kelas-stempel-tanggal [nilai]="kegiatan.startsAt" />
+              <div class="sm:border-r sm:border-garis-halus sm:pr-5">
+                <kelas-stempel-tanggal [nilai]="kegiatan.startsAt" />
+              </div>
 
-              <div class="min-w-0">
+              <div class="min-w-0 sm:pl-6">
                 <h3
                   class="font-serif text-lg leading-snug tracking-[-0.01em] underline-offset-4 group-hover:underline"
                 >
@@ -61,18 +66,25 @@
 
   @if (koleksi.past.length > 0) {
     <section aria-labelledby="lampau-judul" class="mt-12">
-      <kelas-kepala-bagian nomor="02" judul="Sudah berlangsung" judulId="lampau-judul" />
+      <kelas-kepala-bagian
+        nomor="02"
+        judul="Sudah berlangsung"
+        judulId="lampau-judul"
+        [jumlah]="koleksi.past.length + ' kegiatan'"
+      />
 
       <ol class="mt-4 border-t border-garis-halus">
         @for (kegiatan of koleksi.past; track kegiatan.slug) {
           <li class="border-b border-garis-halus">
             <a
               [routerLink]="['/agenda', kegiatan.slug]"
-              class="group grid grid-cols-[4rem_minmax(0,1fr)] items-start gap-4 py-4 opacity-80 transition-opacity duration-100 ease-keluar sm:gap-6 hover:opacity-100"
+              class="group grid grid-cols-[4rem_minmax(0,1fr)] items-start gap-4 py-4 opacity-80 transition-opacity duration-100 ease-keluar hover:opacity-100 sm:gap-0"
             >
-              <kelas-stempel-tanggal [nilai]="kegiatan.startsAt" />
+              <div class="sm:border-r sm:border-garis-halus sm:pr-5">
+                <kelas-stempel-tanggal [nilai]="kegiatan.startsAt" />
+              </div>
 
-              <div class="min-w-0">
+              <div class="min-w-0 sm:pl-6">
                 <h3
                   class="font-serif text-lg leading-snug tracking-[-0.01em] text-teks-kuat-sekunder underline-offset-4 group-hover:text-teks-utama group-hover:underline"
                 >

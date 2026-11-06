@@ -23,52 +23,64 @@
 } @else if (data(); as item) {
   <nav aria-label="Remah" class="teks-meta text-teks-sekunder">
     <ol class="flex flex-wrap items-center gap-2">
-      <li><a routerLink="/" class="hover:text-teks-utama">Beranda</a></li>
+      <li><a routerLink="/" class="inline-flex min-h-11 items-center hover:text-teks-utama">Beranda</a></li>
       <li aria-hidden="true">/</li>
-      <li><a routerLink="/pengumuman" class="hover:text-teks-utama">Pengumuman</a></li>
+      <li>
+        <a routerLink="/pengumuman" class="inline-flex min-h-11 items-center hover:text-teks-utama"
+          >Pengumuman</a
+        >
+      </li>
       <li aria-hidden="true">/</li>
       <li aria-current="page" class="max-w-[18rem] truncate text-teks-utama">{{ item.title }}</li>
     </ol>
   </nav>
 
-  <article class="mt-8 max-w-[68ch]">
-    <header class="border-b border-garis-halus pb-6">
+  <article class="mt-6 grid gap-8 lg:grid-cols-12 lg:gap-12">
+    <header class="lg:col-span-8 lg:col-start-1 lg:row-start-1">
       <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <span class="teks-meta text-sinyal">{{ labelKategori(item.category) }}</span>
-        <time [attr.datetime]="item.publishedAt" class="teks-meta text-teks-sekunder">
-          {{ tanggalJamTeks(item.publishedAt) }} WIB
-        </time>
+        <span class="teks-meta bertanda text-sinyal">{{ labelKategori(item.category) }}</span>
         @if (item.state === 'archived') {
           <span class="teks-meta border border-garis-tegas px-2 py-0.5">Arsip</span>
         }
       </div>
 
-      <h1
-        class="mt-4 font-serif text-[clamp(1.75rem,4.5vw,2.75rem)] leading-[1.05] tracking-[-0.03em]"
-      >
+      <h1 class="mt-5 font-serif text-[clamp(1.75rem,4.8vw,3rem)] leading-[1.02] tracking-[-0.035em]">
         {{ item.title }}
       </h1>
-
-      @if (item.authorName; as penulis) {
-        <p class="mt-4 text-sm text-teks-sekunder">Ditulis oleh {{ penulis }}</p>
-      }
     </header>
 
-    <div class="prosa mt-8" [innerHTML]="item.bodyHtml"></div>
+    <dl
+      class="grid grid-cols-2 gap-px border border-garis-halus bg-garis-halus lg:col-span-4 lg:col-start-9 lg:row-span-2 lg:row-start-1 lg:self-start"
+    >
+      <div class="bg-latar-halaman px-3 py-3">
+        <dt class="teks-meta text-teks-sekunder">Terbit</dt>
+        <dd class="mt-1 text-sm leading-snug">{{ tanggalJamTeks(item.publishedAt) }}</dd>
+      </div>
+      <div class="bg-latar-halaman px-3 py-3">
+        <dt class="teks-meta text-teks-sekunder">Kategori</dt>
+        <dd class="mt-1 text-sm leading-snug">{{ labelKategori(item.category) }}</dd>
+      </div>
+      <div class="bg-latar-halaman px-3 py-3">
+        <dt class="teks-meta text-teks-sekunder">Penulis</dt>
+        <dd class="mt-1 text-sm leading-snug">{{ item.authorName ?? 'Pengurus kelas' }}</dd>
+      </div>
+      <div class="bg-latar-halaman px-3 py-3">
+        <dt class="teks-meta text-teks-sekunder">Diperbarui</dt>
+        <dd class="mt-1 text-sm leading-snug">{{ tanggalTeks(item.updatedAt) }}</dd>
+      </div>
+    </dl>
 
-    <footer class="mt-10 border-t border-garis-halus pt-5">
-      @if (item.updatedAt !== item.publishedAt) {
-        <p class="teks-meta text-teks-sekunder">
-          Diperbarui {{ tanggalJamTeks(item.updatedAt) }} WIB
-        </p>
-      }
+    <div class="lg:col-span-8 lg:col-start-1 lg:row-start-2">
+      <div class="prosa border-t border-garis-halus pt-6" [innerHTML]="item.bodyHtml"></div>
 
-      <a
-        routerLink="/pengumuman"
-        class="mt-4 inline-flex min-h-11 items-center gap-2 border-b border-garis-tegas text-sm transition-colors duration-100 ease-keluar hover:border-sinyal hover:text-sinyal"
-      >
-        <span aria-hidden="true">&larr;</span> Semua pengumuman
-      </a>
-    </footer>
+      <footer class="mt-10 border-t border-garis-halus pt-5">
+        <a
+          routerLink="/pengumuman"
+          class="inline-flex min-h-11 items-center gap-2 border-b border-garis-tegas text-sm transition-colors duration-100 ease-keluar hover:border-sinyal hover:text-sinyal"
+        >
+          <span aria-hidden="true">&larr;</span> Semua pengumuman
+        </a>
+      </footer>
+    </div>
   </article>
 }

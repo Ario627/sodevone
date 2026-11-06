@@ -49,6 +49,7 @@ describe('AlbumService.list', () => {
       findPage,
       findCoverImage: vi.fn(),
       countImages: vi.fn().mockResolvedValue(new Map()),
+      findDefaultCovers: vi.fn().mockResolvedValue(new Map()),
     }).list(1, 12);
 
     expect(hasil.items).toEqual([
@@ -77,6 +78,7 @@ describe('AlbumService.list', () => {
       findPage,
       findCoverImage,
       countImages: vi.fn().mockResolvedValue(new Map()),
+      findDefaultCovers: vi.fn().mockResolvedValue(new Map()),
     }).list(1, 12);
 
     expect(findCoverImage).not.toHaveBeenCalled();
@@ -92,6 +94,7 @@ describe('AlbumService.list', () => {
       findPage,
       findCoverImage,
       countImages: vi.fn().mockResolvedValue(new Map([[ALBUM_ID, 3]])),
+      findDefaultCovers: vi.fn().mockResolvedValue(new Map()),
     }).list(1, 12);
 
     expect(findCoverImage).toHaveBeenCalledWith(ALBUM_ID, COVER_ID);
@@ -109,9 +112,62 @@ describe('AlbumService.list', () => {
       findPage,
       findCoverImage,
       countImages: vi.fn().mockResolvedValue(new Map()),
+      findDefaultCovers: vi.fn().mockResolvedValue(new Map()),
     }).list(1, 12);
 
     expect(hasil.items[0]?.cover).toBeNull();
+  });
+
+  it('memakai foto pertama sebagai sampul bila album belum menetapkan sampul', async () => {
+    const findDefaultCovers = vi
+      .fn()
+      .mockResolvedValue(new Map([[ALBUM_ID, imageOf({ sortOrder: 0 })]]));
+    const findPage = vi.fn().mockResolvedValue({ rows: [albumOf()], total: 1 });
+
+    const hasil = await buatService({
+      findPage,
+      findCoverImage: vi.fn(),
+      countImages: vi.fn().mockResolvedValue(new Map([[ALBUM_ID, 2]])),
+      findDefaultCovers,
+    }).list(1, 12);
+
+    expect(findDefaultCovers).toHaveBeenCalledWith([ALBUM_ID]);
+    expect(hasil.items[0]?.cover?.id).toBe(COVER_ID);
+  });
+
+  it('mengambil sampul cadangan untuk semua album tanpa sampul dalam satu kueri', async () => {
+    const lain = '33333333-3333-4333-8333-333333333333';
+    const findDefaultCovers = vi.fn().mockResolvedValue(new Map());
+    const findPage = vi.fn().mockResolvedValue({
+      rows: [albumOf(), albumOf({ id: lain, slug: 'kerja-bakti' })],
+      total: 2,
+    });
+
+    await buatService({
+      findPage,
+      findCoverImage: vi.fn(),
+      countImages: vi.fn().mockResolvedValue(new Map()),
+      findDefaultCovers,
+    }).list(1, 12);
+
+    expect(findDefaultCovers).toHaveBeenCalledTimes(1);
+    expect(findDefaultCovers).toHaveBeenCalledWith([ALBUM_ID, lain]);
+  });
+
+  it('tidak memakai sampul cadangan untuk album yang sudah menetapkannya', async () => {
+    const findDefaultCovers = vi.fn().mockResolvedValue(new Map());
+    const findPage = vi
+      .fn()
+      .mockResolvedValue({ rows: [albumOf({ coverImageId: COVER_ID })], total: 1 });
+
+    await buatService({
+      findPage,
+      findCoverImage: vi.fn().mockResolvedValue(imageOf()),
+      countImages: vi.fn().mockResolvedValue(new Map()),
+      findDefaultCovers,
+    }).list(1, 12);
+
+    expect(findDefaultCovers).toHaveBeenCalledWith([]);
   });
 
   it('menandai album arsip sebagai arsip', async () => {
@@ -123,6 +179,7 @@ describe('AlbumService.list', () => {
       findPage,
       findCoverImage: vi.fn(),
       countImages: vi.fn().mockResolvedValue(new Map()),
+      findDefaultCovers: vi.fn().mockResolvedValue(new Map()),
     }).list(1, 12);
 
     expect(hasil.items[0]?.state).toBe('archived');
@@ -138,6 +195,7 @@ describe('AlbumService.list', () => {
         findPage,
         findCoverImage: vi.fn(),
         countImages: vi.fn().mockResolvedValue(new Map()),
+        findDefaultCovers: vi.fn().mockResolvedValue(new Map()),
       }).list(1, 12),
     ).rejects.toThrow(/published_at/);
   });
@@ -149,6 +207,7 @@ describe('AlbumService.list', () => {
       findPage,
       findCoverImage: vi.fn(),
       countImages: vi.fn().mockResolvedValue(new Map()),
+      findDefaultCovers: vi.fn().mockResolvedValue(new Map()),
     }).list(1, 12);
 
     expect(hasil.items).toEqual([]);
@@ -164,6 +223,7 @@ describe('AlbumService.latest', () => {
       findLatest,
       findCoverImage: vi.fn(),
       countImages: vi.fn().mockResolvedValue(new Map()),
+      findDefaultCovers: vi.fn().mockResolvedValue(new Map()),
     }).latest(3);
 
     expect(findLatest).toHaveBeenCalledWith(3);
@@ -176,6 +236,7 @@ describe('AlbumService.detail', () => {
       findVisibleBySlug: vi.fn().mockResolvedValue(albumOf()),
       findCoverImage: vi.fn().mockResolvedValue(undefined),
       countImages: vi.fn().mockResolvedValue(new Map([[ALBUM_ID, 30]])),
+      findDefaultCovers: vi.fn().mockResolvedValue(new Map()),
       findImages: vi.fn().mockResolvedValue([imageOf({ id: COVER_ID })]),
     };
 
@@ -202,6 +263,7 @@ describe('AlbumService.detail', () => {
       findVisibleBySlug: vi.fn().mockResolvedValue(albumOf()),
       findCoverImage: vi.fn(),
       countImages: vi.fn().mockResolvedValue(new Map()),
+      findDefaultCovers: vi.fn().mockResolvedValue(new Map()),
       findImages,
     };
 
@@ -228,6 +290,7 @@ describe('AlbumService.detail', () => {
       findVisibleById: vi.fn().mockResolvedValue(albumOf({ slug: 'slug-baru' })),
       findCoverImage: vi.fn(),
       countImages: vi.fn().mockResolvedValue(new Map()),
+      findDefaultCovers: vi.fn().mockResolvedValue(new Map()),
       findImages: vi.fn().mockResolvedValue([]),
     };
 
@@ -261,6 +324,7 @@ describe('AlbumService.detail', () => {
       findRedirectTargetId,
       findCoverImage: vi.fn(),
       countImages: vi.fn().mockResolvedValue(new Map()),
+      findDefaultCovers: vi.fn().mockResolvedValue(new Map()),
       findImages: vi.fn().mockResolvedValue([]),
     };
 

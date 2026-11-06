@@ -14,6 +14,12 @@ const LABEL: Record<AnnouncementCategory, string> = {
   umum: 'Umum',
 };
 
+const LEBAR_NOMOR = 3;
+
 export function labelKategori(kategori: AnnouncementCategory): string {
   return LABEL[kategori];
+}
+
+export function nomorUrut(nomor: number): string {
+  return String(nomor).padStart(LEBAR_NOMOR, '0');
 }

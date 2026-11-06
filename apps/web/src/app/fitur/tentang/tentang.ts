@@ -22,18 +22,43 @@ const JALUR = [
   },
 ] as const;
 
+const KODE_KELAS = [
+  { label: 'Tingkat', nilai: 'XI' },
+  { label: 'Jurusan', nilai: 'PPLG' },
+  { label: 'Rombel', nilai: '1' },
+] as const;
+
 @Component({
   selector: 'kelas-tentang',
   imports: [RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="border-b border-garis-halus pb-8">
-      <h1 class="font-serif text-[clamp(2rem,5vw,2.75rem)] leading-[1] tracking-[-0.03em]">
-        Tentang
-      </h1>
-      <p class="mt-3 max-w-[44ch] text-sm text-teks-kuat-sekunder">
-        Kelas XI PPLG 1, jurusan Pengembangan Perangkat Lunak dan Gim. Situs ini kanal resmi kelas.
-      </p>
+      <div class="grid gap-8 lg:grid-cols-12 lg:items-end">
+        <div class="lg:col-span-8">
+          <p class="teks-meta bertanda text-sinyal">Identitas kelas</p>
+          <h1
+            class="mt-5 font-serif text-[clamp(2rem,5.5vw,3.25rem)] leading-[0.95] tracking-[-0.035em]"
+          >
+            Tentang kelas ini
+          </h1>
+          <p class="mt-5 max-w-[42ch] text-sm text-teks-kuat-sekunder">
+            XI PPLG 1, jurusan Pengembangan Perangkat Lunak dan Gim. Situs ini kanal resmi kelas
+            untuk pengumuman, agenda, dan dokumentasi.
+          </p>
+        </div>
+
+        <dl class="grid grid-cols-3 gap-px border border-garis-halus bg-garis-halus lg:col-span-4">
+          @for (kode of kodeKelas; track kode.label) {
+            <div class="bg-latar-halaman px-3 py-3.5">
+              <dt class="teks-meta text-teks-sekunder">{{ kode.label }}</dt>
+              <dd class="mt-1.5 font-mono text-[1.5rem] leading-none tracking-[-0.06em]">
+                {{ kode.nilai }}
+              </dd>
+            </div>
+          }
+        </dl>
+      </div>
     </header>
 
     <section aria-labelledby="identitas-judul" class="mt-10 grid gap-6 lg:grid-cols-12">
@@ -122,4 +147,5 @@ const JALUR = [
 })
 export class Tentang {
   protected readonly jalur = JALUR;
+  protected readonly kodeKelas = KODE_KELAS;
 }

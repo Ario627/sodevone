@@ -30,6 +30,8 @@ const STATUS_MESSAGE: Record<number, string> = {
 
 const FALLBACK_MESSAGE = 'Terjadi kesalahan pada server';
 
+const TRANSPORT_STATUSES = new Set([413, 429]);
+
 function defaultPhraseOf(status: number): string {
   const name = HttpStatus[status];
 
@@ -84,6 +86,27 @@ export class ApiExceptionFilter implements ExceptionFilter {
     return entries.length > 0 ? entries : undefined;
   }
 
+  private static messageOf(
+    code: ApiErrorCode | undefined,
+    supplied: string | undefined,
+    status: number,
+    fallback: string,
+  ): string {
+    if (code !== undefined) {
+      return supplied ?? fallback;
+    }
+
+    if (
+      TRANSPORT_STATUSES.has(status) ||
+      supplied === undefined ||
+      supplied === defaultPhraseOf(status)
+    ) {
+      return fallback;
+    }
+
+    return supplied;
+  }
+
   private static payloadOf(exception: unknown, status: number): ErrorPayload {
     const fallback = STATUS_MESSAGE[status] ?? FALLBACK_MESSAGE;
 
@@ -94,7 +117,7 @@ export class ApiExceptionFilter implements ExceptionFilter {
     const body = exception.getResponse();
 
     if (typeof body === 'string') {
-      return { message: body };
+      return { message: ApiExceptionFilter.messageOf(undefined, body, status, fallback) };
     }
 
     if (typeof body !== 'object' || body === null) {
@@ -105,8 +128,7 @@ export class ApiExceptionFilter implements ExceptionFilter {
     const code = ApiExceptionFilter.codeOf(record['code']);
     const supplied = typeof record['message'] === 'string' ? record['message'] : undefined;
     const fields = ApiExceptionFilter.fieldsOf(record['fields']);
-    const message =
-      supplied !== undefined && supplied !== defaultPhraseOf(status) ? supplied : fallback;
+    const message = ApiExceptionFilter.messageOf(code, supplied, status, fallback);
 
     return {
       ...(code ? { code } : {}),

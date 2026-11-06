@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { bacaBeranda, permintaanBeranda } from '../../inti/api/beranda.api';
 import { toApiFailure } from '../../inti/api/dasar';
 import { srcsetSampul, sumberSampul } from '../../inti/api/galeri.api';
-import { labelKategori } from '../../inti/format/label';
+import { labelKategori, nomorUrut } from '../../inti/format/label';
 import { rentangJam, tanggalJamTeks, tanggalTeks } from '../../inti/format/tanggal';
 import { GalatMuat } from '../../komponen/galat-muat/galat-muat';
 import { KepalaBagian } from '../../komponen/kepala-bagian/kepala-bagian';
@@ -47,6 +47,7 @@ export class Beranda {
   protected readonly lainnya = computed(() => this.data()?.announcements.slice(1) ?? []);
 
   protected readonly labelKategori = labelKategori;
+  protected readonly nomorUrut = nomorUrut;
   protected readonly tanggalJamTeks = tanggalJamTeks;
   protected readonly tanggalTeks = tanggalTeks;
   protected readonly rentangJam = rentangJam;

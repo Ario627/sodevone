@@ -141,6 +141,34 @@ export class AlbumRepository {
     return rows[0];
   }
 
+  async findDefaultCovers(albumIds: string[]): Promise<Map<string, AlbumImageRow>> {
+    if (albumIds.length === 0) {
+      return new Map();
+    }
+
+    const rows = await this.database.db
+      .selectDistinctOn([galleryImage.albumId], {
+        albumId: galleryImage.albumId,
+        ...IMAGE_COLUMNS,
+      })
+      .from(galleryImage)
+      .where(inArray(galleryImage.albumId, albumIds))
+      .orderBy(galleryImage.albumId, asc(galleryImage.sortOrder), asc(galleryImage.id));
+
+    return new Map(
+      rows.map((row) => [
+        row.albumId,
+        {
+          id: row.id,
+          width: row.width,
+          height: row.height,
+          altText: row.altText,
+          sortOrder: row.sortOrder,
+        },
+      ]),
+    );
+  }
+
   async findRedirectTargetId(slug: string): Promise<string | undefined> {
     const rows = await this.database.db
       .select({ resourceId: slugRedirect.resourceId })

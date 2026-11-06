@@ -9,6 +9,8 @@ const MEDIA_CACHE = 'public, max-age=31536000, immutable';
 
 const DEFAULT_VARIANT: ImageVariant = 'sedang';
 
+const VARIANT_QUERY = ImageVariantSchema.catch(DEFAULT_VARIANT);
+
 @ApiTags('media')
 @Controller('api/media')
 export class MediaController {
@@ -20,11 +22,10 @@ export class MediaController {
   @ApiOkResponse({ description: 'Berkas gambar dengan tipe dari basis data' })
   async serve(
     @Param('id', new ZodValidationPipe(UuidSchema)) id: string,
-    @Query('ukuran', new ZodValidationPipe(ImageVariantSchema.optional()))
-    variant: ImageVariant | undefined,
+    @Query('ukuran', new ZodValidationPipe(VARIANT_QUERY)) variant: ImageVariant,
     @Res() response: Response,
   ): Promise<void> {
-    const image = await this.service.serve(id, variant ?? DEFAULT_VARIANT);
+    const image = await this.service.serve(id, variant);
 
     response.setHeader('Cache-Control', MEDIA_CACHE);
     response.setHeader('X-Content-Type-Options', 'nosniff');

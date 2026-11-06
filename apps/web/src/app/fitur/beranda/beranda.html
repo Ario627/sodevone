@@ -1,21 +1,26 @@
-<section class="grid gap-10 border-b border-garis-halus pb-10 lg:grid-cols-12 lg:items-end lg:pb-14">
-  <div class="lg:col-span-7">
-    <h1 class="mt-6 font-serif text-[clamp(2.75rem,7vw,4.5rem)] leading-[0.9] tracking-[-0.035em]">
-      XI PPLG 1
-    </h1>
-    <p class="mt-6 max-w-[28rem] text-md text-teks-kuat-sekunder">
-      Pengumuman, agenda, dan dokumentasi kegiatan kelas.
-    </p>
-  </div>
+<section class="border-b border-garis-halus pb-10 lg:pb-12">
+  <div class="grid gap-9 lg:grid-cols-12 lg:items-end lg:gap-12">
+    <div class="lg:col-span-8">
+      <p class="teks-meta bertanda text-sinyal">Kelas &middot; Situs resmi</p>
+      <h1 class="mt-5 font-serif text-[clamp(2.75rem,7.5vw,4.75rem)] leading-[0.88] tracking-[-0.04em]">
+        XI&nbsp;PPLG&nbsp;1
+      </h1>
+      <p class="mt-6 max-w-[30rem] text-md text-teks-kuat-sekunder">
+        Pengumuman, agenda, dan dokumentasi kegiatan kelas dalam satu tempat.
+      </p>
+    </div>
 
-  <dl class="flex items-stretch gap-5 sm:gap-7 lg:col-span-5 lg:justify-end">
-    @for (kode of kodeKelas; track kode.label) {
-      <div class="flex flex-col gap-1.5 border-l border-garis-halus pl-4 sm:pl-5">
-        <dt class="teks-meta text-teks-sekunder">{{ kode.label }}</dt>
-        <dd class="font-mono text-2xl leading-none tracking-[-0.05em] sm:text-3xl">{{ kode.nilai }}</dd>
-      </div>
-    }
-  </dl>
+    <dl class="grid grid-cols-3 gap-px border border-garis-halus bg-garis-halus lg:col-span-4">
+      @for (kode of kodeKelas; track kode.label) {
+        <div class="bg-latar-halaman px-3 py-3.5 sm:px-4">
+          <dt class="teks-meta text-teks-sekunder">{{ kode.label }}</dt>
+          <dd class="mt-1.5 font-mono text-[1.625rem] leading-none tracking-[-0.06em]">
+            {{ kode.nilai }}
+          </dd>
+        </div>
+      }
+    </dl>
+  </div>
 </section>
 
 @if (sedangMemuat()) {
@@ -33,6 +38,7 @@
       nomor="01"
       judul="Pengumuman terbaru"
       judulId="pengumuman-judul"
+      [jumlah]="ringkasan.announcements.length + ' terbaru'"
       tautan="/pengumuman"
     />
 
@@ -47,10 +53,7 @@
       >
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 sm:flex-col sm:gap-1.5">
           <span class="teks-meta bertanda text-sinyal">{{ labelKategori(utama.category) }}</span>
-          <time
-            [attr.datetime]="utama.publishedAt"
-            class="teks-meta whitespace-nowrap text-teks-sekunder"
-          >
+          <time [attr.datetime]="utama.publishedAt" class="teks-meta whitespace-nowrap text-teks-sekunder">
             {{ tanggalJamTeks(utama.publishedAt) }}
           </time>
         </div>
@@ -76,11 +79,11 @@
                   {{ labelKategori(pengumuman.category) }}
                 </span>
                 <span
-                  class="min-w-0 truncate font-serif text-base tracking-[-0.01em] underline-offset-4 group-hover:underline"
+                  class="min-w-0 truncate font-serif text-base tracking-[-0.01em] underline-offset-4 group-hover:underline sm:max-w-none"
                 >
                   {{ pengumuman.title }}
                 </span>
-                <span aria-hidden="true" class="pengarah-titik"></span>
+                <span aria-hidden="true" class="pengarah-titik hidden sm:block"></span>
                 <time [attr.datetime]="pengumuman.publishedAt" class="teks-meta shrink-0 text-teks-sekunder">
                   {{ tanggalTeks(pengumuman.publishedAt) }}
                 </time>
@@ -97,6 +100,7 @@
       nomor="02"
       judul="Agenda terdekat"
       judulId="agenda-judul"
+      [jumlah]="ringkasan.upcomingEvents.length + ' mendatang'"
       tautan="/agenda"
     />
 
@@ -110,11 +114,13 @@
           <li class="border-b border-garis-halus">
             <a
               [routerLink]="['/agenda', kegiatan.slug]"
-              class="group grid grid-cols-[3.5rem_minmax(0,1fr)] items-start gap-3 py-4 sm:grid-cols-[4rem_minmax(0,1fr)] sm:gap-6"
+              class="group grid grid-cols-[3.5rem_minmax(0,1fr)] items-start gap-3 py-4 sm:grid-cols-[4rem_minmax(0,1fr)] sm:gap-0"
             >
-              <kelas-stempel-tanggal [nilai]="kegiatan.startsAt" />
+              <div class="sm:border-r sm:border-garis-halus sm:pr-5">
+                <kelas-stempel-tanggal [nilai]="kegiatan.startsAt" />
+              </div>
 
-              <div class="min-w-0">
+              <div class="min-w-0 sm:pl-6">
                 <h3
                   class="font-serif text-lg leading-snug tracking-[-0.01em] underline-offset-4 group-hover:underline"
                 >
@@ -141,11 +147,12 @@
         nomor="03"
         judul="Dokumentasi"
         judulId="galeri-judul"
+        [jumlah]="ringkasan.albums.length + ' album'"
         tautan="/galeri"
       />
 
       <ul class="mt-4 grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 sm:gap-x-6">
-        @for (album of ringkasan.albums; track album.slug) {
+        @for (album of ringkasan.albums; track album.slug; let indeks = $index) {
           <li>
             <a [routerLink]="['/galeri', album.slug]" class="group block">
               <span class="block border border-garis-halus bg-latar-sekunder">
@@ -157,7 +164,8 @@
                     [attr.width]="sampul.width"
                     [attr.height]="sampul.height"
                     [attr.alt]="sampul.altText ?? album.title"
-                    loading="lazy"
+                    [attr.loading]="indeks < 3 ? 'eager' : 'lazy'"
+                    [attr.fetchpriority]="indeks === 0 ? 'high' : undefined"
                     decoding="async"
                     class="aspect-[4/3] w-full object-cover transition-opacity duration-150 ease-keluar group-hover:opacity-90 motion-reduce:transition-none"
                   />
@@ -169,12 +177,15 @@
                   </span>
                 }
               </span>
+              <span class="teks-meta mt-3 flex items-baseline gap-2 text-teks-sekunder">
+                <span aria-hidden="true" class="text-garis-tegas">{{ nomorUrut(indeks + 1) }}</span>
+                <span>{{ album.imageCount }} foto</span>
+              </span>
               <span
-                class="mt-2.5 block font-serif text-base leading-snug tracking-[-0.01em] underline-offset-4 group-hover:underline"
+                class="mt-1 block font-serif text-base leading-snug tracking-[-0.01em] underline-offset-4 group-hover:underline"
               >
                 {{ album.title }}
               </span>
-              <span class="teks-meta mt-1 block text-teks-sekunder">{{ album.imageCount }} foto</span>
             </a>
           </li>
         }

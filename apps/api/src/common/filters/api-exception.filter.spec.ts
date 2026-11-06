@@ -1,10 +1,13 @@
 import type { ArgumentsHost } from '@nestjs/common';
 import {
   BadRequestException,
+  HttpException,
   Logger,
   NotFoundException,
+  PayloadTooLargeException,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { ThrottlerException } from '@nestjs/throttler';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiExceptionFilter } from './api-exception.filter.js';
 
@@ -113,5 +116,35 @@ describe('ApiExceptionFilter', () => {
     const hasil = render(new NotFoundException(), '3f9a1c2e-7b41');
 
     expect(hasil.body.error.correlationId).toBe('3f9a1c2e-7b41');
+  });
+
+  it('mengganti pesan batas ukuran bawaan pustaka dengan pesan Bahasa Indonesia', () => {
+    const hasil = render(new PayloadTooLargeException('File too large'));
+
+    expect(hasil.status).toBe(413);
+    expect(hasil.body.error.code).toBe('PAYLOAD_TOO_LARGE');
+    expect(hasil.body.error.message).toBe('Berkas yang dikirim melebihi batas ukuran.');
+    expect(JSON.stringify(hasil.body)).not.toContain('File too large');
+  });
+
+  it('mengganti pesan batas permintaan bawaan pustaka dengan pesan Bahasa Indonesia', () => {
+    const hasil = render(new ThrottlerException());
+
+    expect(hasil.status).toBe(429);
+    expect(hasil.body.error.code).toBe('RATE_LIMITED');
+    expect(hasil.body.error.message).toBe('Terlalu banyak permintaan. Coba lagi nanti.');
+  });
+
+  it('mempertahankan pesan khusus ketika kode galat disertakan sendiri', () => {
+    const hasil = render(
+      new HttpException(
+        { code: 'RATE_LIMITED', message: 'Terlalu banyak percobaan masuk. Coba lagi dalam 15 menit.' },
+        429,
+      ),
+    );
+
+    expect(hasil.body.error.message).toBe(
+      'Terlalu banyak percobaan masuk. Coba lagi dalam 15 menit.',
+    );
   });
 });

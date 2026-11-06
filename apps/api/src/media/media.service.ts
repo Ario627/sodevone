@@ -11,6 +11,7 @@ import type { Env } from '../config/env.js';
 import { DatabaseService } from '../db/database.service.js';
 import { galleryAlbum } from '../db/schema/gallery.js';
 import { galleryImage } from '../db/schema/gallery.js';
+import { variantKeyOf } from './image-keys.js';
 
 const PUBLISHED = 'published';
 
@@ -28,14 +29,6 @@ export type ServedImage = {
 };
 
 type ImageFileRow = { storageKey: string; mimeType: string; byteSize: number };
-
-function variantKeyOf(storageKey: string, variant: ImageVariant): string {
-  const dot = storageKey.lastIndexOf('.');
-
-  return dot === -1
-    ? `${storageKey}-${variant}`
-    : `${storageKey.slice(0, dot)}-${variant}${storageKey.slice(dot)}`;
-}
 
 function etagOf(storageKey: string): string {
   return `"${storageKey.replace(ETAG_UNSAFE, '-')}"`;

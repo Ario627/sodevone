@@ -79,7 +79,7 @@
                 [attr.width]="foto.width"
                 [attr.height]="foto.height"
                 [attr.alt]="teksAlternatif(foto)"
-                [attr.loading]="indeks === 0 ? 'eager' : 'lazy'"
+                [attr.loading]="indeks < 4 ? 'eager' : 'lazy'"
                 [attr.fetchpriority]="indeks === 0 ? 'high' : undefined"
                 decoding="async"
                 class="aspect-square w-full object-cover transition-opacity duration-150 ease-keluar group-hover:opacity-90 motion-reduce:transition-none"

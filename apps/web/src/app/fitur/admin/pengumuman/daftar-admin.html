@@ -1,0 +1,123 @@
+<div class="flex flex-wrap items-end justify-between gap-4 pt-8">
+  <div>
+    <h1 class="font-serif text-[clamp(1.5rem,3.5vw,2rem)] leading-[1.1] tracking-[-0.03em]">
+      Pengumuman
+    </h1>
+    <p class="teks-meta mt-2 text-teks-sekunder">{{ jumlahDraf() }} draf di halaman ini</p>
+  </div>
+
+  <a
+    routerLink="/admin/pengumuman/baru"
+    class="min-h-11 bg-sinyal px-5 py-3 text-sm font-medium text-teks-terbalik transition-opacity duration-100 ease-keluar hover:opacity-90"
+  >
+    Tulis pengumuman
+  </a>
+</div>
+
+<nav aria-label="Saring status" class="scrollbar-none mt-8 overflow-x-auto border-b border-garis-halus">
+  <ul class="flex items-center gap-5 whitespace-nowrap">
+    @for (pilihan of pilihanStatus; track pilihan.nilai) {
+      <li>
+        <a
+          [routerLink]="['/admin/pengumuman']"
+          [queryParams]="pilihan.nilai === '' ? {} : { status: pilihan.nilai }"
+          [class.text-teks-utama]="(status() ?? '') === pilihan.nilai"
+          [class.underline]="(status() ?? '') === pilihan.nilai"
+          [class.decoration-sinyal]="(status() ?? '') === pilihan.nilai"
+          class="teks-meta inline-flex min-h-11 items-center pb-2 text-teks-sekunder decoration-2 underline-offset-[7px] hover:text-teks-utama"
+          >{{ pilihan.label }}</a
+        >
+      </li>
+    }
+  </ul>
+</nav>
+
+@if (sedangMemuat()) {
+  <kelas-memuat class="mt-8" pesan="Memuat pengumuman" [jumlah]="4" />
+} @else if (galat(); as kegagalan) {
+  <kelas-galat-muat
+    class="mt-8"
+    [pesan]="kegagalan.message"
+    [korelasi]="kegagalan.correlationId"
+    (cobaLagi)="muatUlang()"
+  />
+} @else if (data(); as halaman) {
+  @if (halaman.items.length === 0) {
+    <kelas-kosong
+      class="mt-8"
+      judul="Belum ada pengumuman"
+      [pesan]="
+        adaFilter()
+          ? 'Tidak ada pengumuman dengan status ini.'
+          : 'Mulai dengan menulis draf pertama. Draf tidak tampil di situs sampai diterbitkan.'
+      "
+      [tautan]="adaFilter() ? '/admin/pengumuman' : '/admin/pengumuman/baru'"
+      [labelTautan]="adaFilter() ? 'Hapus filter' : 'Tulis pengumuman'"
+    />
+  } @else {
+    <ol class="mt-6 border-t border-garis-halus">
+      @for (butir of halaman.items; track butir.id) {
+        <li class="border-b border-garis-halus">
+          <a
+            [routerLink]="['/admin/pengumuman', butir.id]"
+            class="group grid gap-2 py-4 sm:grid-cols-[minmax(0,1fr)_8rem] sm:items-baseline sm:gap-6"
+          >
+            <div class="min-w-0">
+              <p class="text-base leading-snug underline-offset-4 group-hover:underline">
+                {{ butir.title }}
+              </p>
+              <p class="teks-meta mt-1.5 flex flex-wrap items-baseline gap-x-3 text-teks-sekunder">
+                <span>{{ labelKategori(butir.category) }}</span>
+                <span aria-hidden="true">&middot;</span>
+                <span class="truncate">{{ butir.slug }}</span>
+              </p>
+            </div>
+
+            <div class="flex items-baseline gap-3 sm:flex-col sm:items-end sm:gap-1">
+              <span
+                class="teks-meta border px-2 py-0.5"
+                [class.border-sinyal]="butir.status === 'draft'"
+                [class.text-sinyal]="butir.status === 'draft'"
+                [class.border-garis-tegas]="butir.status !== 'draft'"
+                >{{ labelStatus(butir.status) }}</span
+              >
+              <span class="teks-meta text-teks-sekunder">{{ tanggalJamTeks(butir.updatedAt) }}</span>
+            </div>
+          </a>
+        </li>
+      }
+    </ol>
+
+    @if (halaman.meta.totalPages > 1) {
+      <nav aria-label="Navigasi halaman" class="mt-6 flex items-center justify-between gap-4">
+        <div class="min-w-28">
+          @if (tautanMundur(); as sebelumnya) {
+            <a
+              [routerLink]="['/admin/pengumuman']"
+              [queryParams]="sebelumnya"
+              rel="prev"
+              class="inline-flex min-h-11 items-center gap-2 text-sm hover:text-sinyal"
+            >
+              <span aria-hidden="true">&larr;</span> Sebelumnya
+            </a>
+          }
+        </div>
+
+        <p class="teks-meta text-teks-sekunder">{{ ringkasanHalaman() }}</p>
+
+        <div class="flex min-w-28 justify-end">
+          @if (tautanMaju(); as berikutnya) {
+            <a
+              [routerLink]="['/admin/pengumuman']"
+              [queryParams]="berikutnya"
+              rel="next"
+              class="inline-flex min-h-11 items-center gap-2 text-sm hover:text-sinyal"
+            >
+              Berikutnya <span aria-hidden="true">&rarr;</span>
+            </a>
+          }
+        </div>
+      </nav>
+    }
+  }
+}

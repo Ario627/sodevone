@@ -116,6 +116,16 @@ export const AlbumAdminSchema = z.object({
 
 export type AlbumAdmin = z.infer<typeof AlbumAdminSchema>;
 
+export const AlbumAdminDetailSchema = AlbumAdminSchema.extend({
+  images: z.array(GalleryImageSchema),
+});
+
+export type AlbumAdminDetail = z.infer<typeof AlbumAdminDetailSchema>;
+
+export const AlbumAdminPageSchema = paginatedSchema(AlbumAdminSchema);
+
+export type AlbumAdminPage = z.infer<typeof AlbumAdminPageSchema>;
+
 export const AlbumCreateSchema = z.strictObject({
   title: AlbumTitleSchema,
   description: AlbumDescriptionSchema.nullable().optional(),
@@ -148,6 +158,14 @@ export type AlbumAdminListQuery = z.infer<typeof AlbumAdminListQuerySchema>;
 export const ImageAltUpdateSchema = z.strictObject({ altText: ImageAltTextSchema });
 
 export type ImageAltUpdate = z.infer<typeof ImageAltUpdateSchema>;
+
+export const MAX_ALBUM_IMAGES = 200;
+
+export const AlbumImageOrderSchema = z.strictObject({
+  ids: z.array(UuidSchema).min(1).max(MAX_ALBUM_IMAGES),
+});
+
+export type AlbumImageOrder = z.infer<typeof AlbumImageOrderSchema>;
 
 export const ImageUploadFailureSchema = z.object({
   fileName: z

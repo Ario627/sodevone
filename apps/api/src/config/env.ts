@@ -35,6 +35,7 @@ export const EnvSchema = z.object({
   LOGIN_IP_FAILURE_LIMIT: z.coerce.number().int().min(1).max(1000).default(30),
   PASSWORD_BREACH_CHECK: z.enum(['enabled', 'disabled']).default('enabled'),
   PASSWORD_BREACH_TIMEOUT_MS: z.coerce.number().int().min(200).max(10_000).default(2_500),
+  IMAGE_UPLOAD_CONCURRENCY: z.coerce.number().int().min(1).max(8).default(2),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

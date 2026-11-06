@@ -131,28 +131,43 @@ describe('DetailGaleri', () => {
     expect(gambar.getAttribute('srcset')).toContain('1024w');
   });
 
-  it('memuat foto pertama secara eager dan sisanya lazy', async () => {
+  it('memuat satu baris kisi secara eager dan sisanya lazy', async () => {
     const { fixture, http } = await siapkan();
+
+    const items = Array.from({ length: 6 }, (_, indeks) => ({
+      ...FOTO,
+      id: `55555555-5555-4555-8555-5555555555${String(indeks).padStart(2, '0')}`,
+      sortOrder: indeks,
+    }));
 
     http
       .expectOne((req) => req.url === '/api/public/albums/pensi-2026')
       .flush(
         albumDengan({
-          imageCount: 2,
+          imageCount: 6,
           images: {
-            items: [FOTO, { ...FOTO, id: '55555555-5555-4555-8555-555555555555', sortOrder: 1 }],
-            meta: { page: 1, perPage: 24, total: 2, totalPages: 1 },
+            items,
+            meta: { page: 1, perPage: 24, total: 6, totalPages: 1 },
           },
         }),
       );
 
     await fixture.whenStable();
 
-    const gambar = Array.from(fixture.nativeElement.querySelectorAll('img')) as HTMLImageElement[];
+    const gambar = Array.from(
+      fixture.nativeElement.querySelectorAll('img'),
+    ) as HTMLImageElement[];
 
-    expect(gambar).toHaveLength(2);
-    expect(gambar[0]?.getAttribute('loading')).toBe('eager');
-    expect(gambar[1]?.getAttribute('loading')).toBe('lazy');
+    expect(gambar).toHaveLength(6);
+    expect(gambar.slice(0, 4).map((item) => item.getAttribute('loading'))).toEqual([
+      'eager',
+      'eager',
+      'eager',
+      'eager',
+    ]);
+    expect(gambar.slice(4).map((item) => item.getAttribute('loading'))).toEqual(['lazy', 'lazy']);
+    expect(gambar[0]?.getAttribute('fetchpriority')).toBe('high');
+    expect(gambar[1]?.getAttribute('fetchpriority')).toBeNull();
   });
 
   it('membuka penampil foto saat gambar dipilih', async () => {

@@ -64,19 +64,39 @@ function metaOf(page: number, perPage: number, total: number): PaginationMeta {
 export class AlbumService {
   constructor(private readonly repository: AlbumRepository) {}
 
-  private async coverOf(row: AlbumPublicRow): Promise<AlbumImageRow | undefined> {
-    return row.coverImageId === null
-      ? undefined
-      : this.repository.findCoverImage(row.id, row.coverImageId);
+  private async coversOf(rows: readonly AlbumPublicRow[]): Promise<Map<string, AlbumImageRow>> {
+    const explicit = rows.filter((row) => row.coverImageId !== null);
+    const withoutCover = rows.filter((row) => row.coverImageId === null);
+
+    const [chosen, fallback] = await Promise.all([
+      Promise.all(
+        explicit.map((row) =>
+          this.repository.findCoverImage(row.id, row.coverImageId as string),
+        ),
+      ),
+      this.repository.findDefaultCovers(withoutCover.map((row) => row.id)),
+    ]);
+
+    const result = new Map<string, AlbumImageRow>(fallback);
+
+    explicit.forEach((row, index) => {
+      const image = chosen[index];
+
+      if (image !== undefined) {
+        result.set(row.id, image);
+      }
+    });
+
+    return result;
   }
 
   private async summaryRows(rows: AlbumPublicRow[]): Promise<AlbumSummary[]> {
     const [covers, counts] = await Promise.all([
-      Promise.all(rows.map((row) => this.coverOf(row))),
+      this.coversOf(rows),
       this.repository.countImages(rows.map((row) => row.id)),
     ]);
 
-    return rows.map((row, index) => toSummary(row, covers[index], counts.get(row.id) ?? 0));
+    return rows.map((row) => toSummary(row, covers.get(row.id), counts.get(row.id) ?? 0));
   }
 
   async list(page: number, perPage: number): Promise<AlbumPage> {
@@ -96,14 +116,14 @@ export class AlbumService {
   }
 
   private async detailOf(row: AlbumPublicRow, query: AlbumDetailQuery): Promise<AlbumDetail> {
-    const [cover, total, images] = await Promise.all([
-      this.coverOf(row),
+    const [covers, total, images] = await Promise.all([
+      this.coversOf([row]),
       this.repository.countImages([row.id]).then((map) => map.get(row.id) ?? 0),
       this.repository.findImages(row.id, query.page, query.perPage),
     ]);
 
     return {
-      ...toSummary(row, cover, total),
+      ...toSummary(row, covers.get(row.id), total),
       images: {
         items: images.map(toImage),
         meta: metaOf(query.page, query.perPage, total),

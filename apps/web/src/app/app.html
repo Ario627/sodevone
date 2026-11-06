@@ -5,9 +5,8 @@
     <a
       class="bertanda min-h-11 shrink-0 items-center whitespace-nowrap font-serif text-[1.0625rem] leading-none tracking-[-0.015em]"
       routerLink="/"
+      >{{ namaKelas() }}</a
     >
-      {{ namaKelas() }}
-    </a>
 
     <nav
       aria-label="Navigasi utama"
@@ -31,6 +30,10 @@
   </div>
 </header>
 
+@if (pitaTampil()) {
+  <kelas-pita-edisi />
+}
+
 <main
   id="konten-utama"
   class="mx-auto w-full max-w-[76rem] flex-1 px-5 pt-8 pb-16 sm:px-8 sm:pt-12"
@@ -40,9 +43,32 @@
 </main>
 
 <footer class="mt-16 border-t border-garis-halus">
-  <div
-    class="mx-auto flex max-w-[76rem] flex-col gap-1 px-5 py-5 sm:flex-row sm:items-baseline sm:justify-between sm:px-8"
-  >
-    <p class="teks-meta text-teks-sekunder">{{ namaKelas() }} &middot; {{ tahun }}</p>
+  <div class="mx-auto grid max-w-[76rem] gap-6 px-5 py-8 sm:grid-cols-3 sm:gap-8 sm:px-8">
+    <div>
+      <p class="teks-meta text-sinyal">Kolofon</p>
+      <p class="mt-2 text-sm leading-snug text-teks-kuat-sekunder">{{ namaKelas() }}</p>
+      <p class="teks-meta mt-1 text-teks-sekunder">Pengembangan Perangkat Lunak dan Gim</p>
+    </div>
+
+    <div class="sm:border-l sm:border-garis-halus sm:pl-8">
+      <p class="teks-meta text-teks-sekunder">Edisi</p>
+      <p class="teks-meta mt-2 text-teks-kuat-sekunder">{{ tahun }}</p>
+      <p class="teks-meta mt-1 text-teks-sekunder">Diperbarui pengurus kelas</p>
+    </div>
+
+    <div class="sm:border-l sm:border-garis-halus sm:pl-8">
+      <p class="teks-meta text-teks-sekunder">Halaman</p>
+      <ul class="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+        @for (tautan of tautanNavigasi; track tautan.jalur) {
+          <li>
+            <a
+              [routerLink]="tautan.jalur"
+              class="teks-meta inline-flex min-h-6 items-center text-teks-kuat-sekunder transition-colors duration-100 ease-keluar hover:text-sinyal"
+              >{{ tautan.label }}</a
+            >
+          </li>
+        }
+      </ul>
+    </div>
   </div>
 </footer>

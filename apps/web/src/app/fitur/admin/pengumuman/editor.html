@@ -1,0 +1,155 @@
+<div class="flex flex-wrap items-baseline justify-between gap-3 pt-8">
+  <h1 class="font-serif text-[clamp(1.5rem,3.5vw,2rem)] leading-[1.1] tracking-[-0.03em]">
+    {{ judulTampil() }}
+  </h1>
+
+  <div class="flex items-center gap-4">
+    @if (status(); as nilai) {
+      <span class="teks-meta text-teks-sekunder">{{ labelStatus(nilai) }}</span>
+    }
+    <a
+      routerLink="/admin/pengumuman"
+      class="teks-meta inline-flex min-h-11 items-center text-teks-sekunder hover:text-teks-utama"
+    >
+      &larr; Semua pengumuman
+    </a>
+  </div>
+</div>
+
+@if (tidakDitemukan()) {
+  <p role="alert" class="mt-6 border-l-2 border-galat pl-3 text-sm text-galat">
+    Alamat pengumuman tidak sah.
+  </p>
+} @else if (sedangMemuat()) {
+  <kelas-memuat class="mt-8" pesan="Memuat pengumuman" [jumlah]="3" />
+} @else if (galatMuat(); as kegagalan) {
+  <kelas-galat-muat
+    class="mt-8"
+    [pesan]="kegagalan.message"
+    [korelasi]="kegagalan.correlationId"
+    (cobaLagi)="muatUlang()"
+  />
+} @else {
+  <form class="mt-8 grid gap-6" (submit)="simpan($event)" novalidate>
+    <div>
+      <label for="judul" class="teks-meta text-teks-sekunder">Judul</label>
+      <input
+        id="judul"
+        name="judul"
+        maxlength="160"
+        [value]="judul()"
+        (input)="ubahJudul($event)"
+        class="mt-2 min-h-11 w-full border-b border-garis-tegas bg-transparent text-lg focus:border-sinyal"
+      />
+      <p class="mt-1.5 text-xs text-teks-sekunder">3–160 karakter. Muncul sebagai judul halaman.</p>
+    </div>
+
+    <div class="grid gap-5 sm:grid-cols-[10rem_minmax(0,1fr)]">
+      <div>
+        <label for="kategori" class="teks-meta text-teks-sekunder">Kategori</label>
+        <select
+          id="kategori"
+          (change)="ubahKategori($event)"
+          class="mt-2 min-h-11 w-full border-b border-garis-tegas bg-transparent text-sm focus:border-sinyal"
+        >
+          @for (pilihan of kategoriTersedia; track pilihan) {
+            <option [value]="pilihan" [selected]="kategori() === pilihan">
+              {{ labelKategori(pilihan) }}
+            </option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label for="slug" class="teks-meta text-teks-sekunder">Slug</label>
+        <input
+          id="slug"
+          name="slug"
+          maxlength="120"
+          autocapitalize="none"
+          spellcheck="false"
+          placeholder="dibuat otomatis dari judul"
+          [value]="slug()"
+          (input)="ubahSlug($event)"
+          class="mt-2 min-h-11 w-full border-b border-garis-tegas bg-transparent font-mono text-sm focus:border-sinyal"
+        />
+        <p class="mt-1.5 text-xs text-teks-sekunder">
+          Huruf kecil, angka, dan tanda hubung. Kosongkan agar server membuatnya.
+        </p>
+      </div>
+    </div>
+
+    <div>
+      <label for="ringkasan" class="teks-meta text-teks-sekunder">Ringkasan</label>
+      <input
+        id="ringkasan"
+        name="ringkasan"
+        maxlength="320"
+        [value]="ringkasan()"
+        (input)="ubahRingkasan($event)"
+        class="mt-2 min-h-11 w-full border-b border-garis-tegas bg-transparent text-sm focus:border-sinyal"
+      />
+      <p class="mt-1.5 text-xs text-teks-sekunder">
+        Satu kalimat untuk daftar dan beranda. Maksimal 320 karakter.
+      </p>
+    </div>
+
+    <div>
+      <label for="isi" class="teks-meta text-teks-sekunder">Isi</label>
+      <textarea
+        id="isi"
+        name="isi"
+        rows="14"
+        [value]="isi()"
+        (input)="ubahIsi($event)"
+        class="mt-2 w-full border border-garis-tegas bg-latar-panel p-4 font-mono text-sm leading-[1.6] focus:border-sinyal"
+      ></textarea>
+      <p class="mt-1.5 text-xs text-teks-sekunder">
+        Markdown terbatas: paragraf, tebal, miring, tautan, daftar, kutipan, judul tingkat 2 dan 3,
+        serta kode inline.
+      </p>
+    </div>
+
+    @if (galat(); as pesanGalat) {
+      <p role="alert" class="border-l-2 border-galat pl-3 text-sm text-galat">{{ pesanGalat }}</p>
+    }
+
+    @if (pesan(); as pesanBerhasil) {
+      <p role="status" class="border-l-2 border-berhasil pl-3 text-sm text-berhasil">
+        {{ pesanBerhasil }}
+      </p>
+    }
+
+    <div class="flex flex-wrap items-center gap-4 border-t border-garis-halus pt-5">
+      <button
+        type="submit"
+        [disabled]="!bisaSimpan()"
+        class="min-h-11 bg-sinyal px-5 text-sm font-medium text-teks-terbalik transition-opacity duration-100 ease-keluar disabled:opacity-40"
+      >
+        {{ sedangSimpan() ? 'Menyimpan…' : 'Simpan' }}
+      </button>
+
+      @if (id() !== undefined && status() === 'draft') {
+        <button
+          type="button"
+          (click)="terbitkan()"
+          [disabled]="sedangUbahStatus() || status() === undefined"
+          class="min-h-11 border-b border-garis-tegas text-sm transition-colors duration-100 ease-keluar hover:border-sinyal hover:text-sinyal disabled:opacity-40"
+        >
+          Terbitkan
+        </button>
+      }
+
+      @if (id() !== undefined && status() === 'published') {
+        <button
+          type="button"
+          (click)="arsipkan()"
+          [disabled]="sedangUbahStatus()"
+          class="min-h-11 border-b border-garis-tegas text-sm text-galat transition-colors duration-100 ease-keluar hover:border-galat disabled:opacity-40"
+        >
+          Arsipkan
+        </button>
+      }
+    </div>
+  </form>
+}

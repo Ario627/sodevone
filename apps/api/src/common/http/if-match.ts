@@ -4,7 +4,7 @@ const VERSION_ETAG = /^(?:W\/)?"?([1-9][0-9]{0,8})"?$/;
 
 const ANY_VERSION = '*';
 
-const INVALID_MESSAGE = 'Header If-Match harus berisi nomor versi pengumuman.';
+const INVALID_MESSAGE = 'Header If-Match harus berisi nomor versi data.';
 
 export function etagOf(version: number): string {
   return `"${version}"`;

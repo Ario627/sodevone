@@ -14,7 +14,7 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
       <button
         type="button"
         (click)="cobaLagi.emit()"
-        class="mt-5 inline-flex min-h-11 items-center border-b border-garis-tegas text-sm transition-colors duration-100 ease-keluar hover:border-sinyal hover:text-sinyal"
+        class="mt-5 inline-flex min-h-11 items-center border-b border-garis-tegas text-sm transition-colors duration-100 ease-keluar hover:border-sinyal hover:text-sinyal cursor-pointer"
       >
         Coba lagi
       </button>
