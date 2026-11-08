@@ -1,0 +1,101 @@
+<section class="relative">
+  <div class="relative h-[clamp(20rem,70svh,44rem)] lg:h-[calc(100svh-4rem)]">
+    <kelas-ruang-kelas
+      [terpilih]="idTerpilih()"
+      (pilih)="bukaAnggota($event)"
+      class="absolute inset-0"
+    />
+
+    <div class="pointer-events-none absolute inset-x-0 bottom-0">
+      <div class="pudar-bawah absolute inset-x-0 bottom-0 h-[85%]"></div>
+
+      <div class="relative mx-auto w-full max-w-[76rem] px-5 pb-8 sm:px-8 sm:pb-10">
+        <p class="teks-piksel text-sinyal">Ruang kelas</p>
+
+        <h1
+          class="mt-3 max-w-[20ch] font-serif text-[clamp(2rem,5.2vw,3.4rem)] leading-[0.94] tracking-[-0.035em]"
+        >
+          Satu blok, satu orang
+        </h1>
+
+        <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <span class="flex items-center gap-2">
+            <span class="text-teks-kuat-sekunder">
+              <kelas-angka-piksel teks="36" [tinggi]="15" />
+            </span>
+            <span class="teks-meta text-teks-sekunder">siswa</span>
+          </span>
+
+          <span aria-hidden="true" class="h-3.5 w-px bg-garis-tegas"></span>
+
+          <span class="flex items-center gap-2">
+            <span class="text-sinyal">
+              <kelas-angka-piksel teks="1" [tinggi]="15" />
+            </span>
+            <span class="teks-meta text-teks-sekunder">wali kelas</span>
+          </span>
+        </div>
+
+        <p class="mt-3 max-w-[38ch] text-sm leading-relaxed text-teks-kuat-sekunder">
+          Geser untuk memutar ruangan, ketuk satu tokoh untuk melihat namanya.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="relative mx-auto mt-20 max-w-[76rem] px-5 sm:mt-24 sm:px-8">
+  <div class="flex flex-wrap items-end justify-between gap-x-10 gap-y-4">
+    <div class="max-w-[42ch]">
+      <p class="teks-piksel text-sinyal">Jejak</p>
+
+      <h2 class="mt-3 font-serif text-2xl leading-tight tracking-[-0.03em] sm:text-3xl">
+        Yang tersisa setelah bel berbunyi
+      </h2>
+    </div>
+
+    <p class="teks-meta max-w-[24ch] text-teks-sekunder">
+      Gulir untuk menyusuri garis
+    </p>
+  </div>
+
+  @if (sedangMemuat()) {
+    <kelas-memuat class="mt-12" pesan="Memuat dokumentasi kelas" [jumlah]="3" />
+  } @else if (galat(); as kegagalan) {
+    <kelas-galat-muat
+      class="mt-12"
+      [pesan]="kegagalan.message"
+      [korelasi]="kegagalan.correlationId"
+      (cobaLagi)="muatUlang()"
+    />
+  } @else if (album().length === 0) {
+    <p class="mt-12 border-y border-garis-halus py-5 text-sm text-teks-sekunder">
+      Belum ada album yang dipublikasikan. Jejaknya akan muncul di sini begitu album pertama
+      terbit.
+    </p>
+  } @else {
+    <kelas-jejak-album class="mt-10 block" [album]="album()" (bukaFoto)="bukaFoto($event)" />
+  }
+</section>
+
+<section class="mx-auto mt-20 max-w-[76rem] px-5 pb-4 sm:px-8">
+  <div class="border-t border-garis-halus pt-6">
+    <p class="teks-piksel text-sinyal">Selesai</p>
+
+    <p class="mt-3 max-w-[52ch] text-sm leading-relaxed text-teks-kuat-sekunder">
+      Tiga puluh enam orang, satu wali kelas, dan ribuan jam pelajaran yang tidak semuanya masuk
+      foto. Yang tersisa di halaman ini cuma sebagian kecilnya.
+    </p>
+
+    <a
+      routerLink="/galeri"
+      class="teks-meta mt-4 inline-flex min-h-11 items-center gap-1.5 border-b border-garis-tegas pb-1 text-teks-kuat-sekunder transition-colors duration-100 ease-keluar hover:border-sinyal hover:text-sinyal"
+    >
+      Semua album <span aria-hidden="true">&rarr;</span>
+    </a>
+  </div>
+</section>
+
+<kelas-lembar-anggota [anggota]="anggotaTerpilih()" (tutupLembar)="tutupAnggota()" />
+
+<kelas-lembar-foto [album]="fotoTerpilih()" (tutupLembar)="tutupFoto()" />

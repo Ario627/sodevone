@@ -1,17 +1,16 @@
 import { createReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';
-import path from 'node:path';
 import type { Readable } from 'node:stream';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { and, eq, inArray } from 'drizzle-orm';
 import type { ImageVariant } from '@kelas/contracts';
 import { resolveWithinRoot } from '../common/media/storage-path.js';
-import type { Env } from '../config/env.js';
 import { DatabaseService } from '../db/database.service.js';
 import { galleryAlbum } from '../db/schema/gallery.js';
 import { galleryImage } from '../db/schema/gallery.js';
 import { variantKeyOf } from './image-keys.js';
+import { storageKeysOf } from './image-keys.js';
+import { MediaStorageService } from './media-storage.service.js';
 
 const PUBLISHED = 'published';
 
@@ -21,12 +20,19 @@ const VISIBLE_STATUSES = [PUBLISHED, ARCHIVED] as const;
 
 const ETAG_UNSAFE = /[^a-zA-Z0-9]/g;
 
-export type ServedImage = {
-  stream: Readable;
-  mimeType: string;
-  byteSize: number;
-  etag: string;
-};
+export type ServedImage =
+  | {
+      kind: 'file';
+      stream: Readable;
+      mimeType: string;
+      byteSize: number;
+      etag: string;
+    }
+  | {
+      kind: 'remote';
+      location: string;
+      etag: string;
+    };
 
 type ImageFileRow = { storageKey: string; mimeType: string; byteSize: number };
 
@@ -40,12 +46,8 @@ export class MediaService {
 
   constructor(
     private readonly database: DatabaseService,
-    private readonly config: ConfigService<Env, true>,
+    private readonly storage: MediaStorageService,
   ) {}
-
-  private root(): string {
-    return path.resolve(this.config.get('MEDIA_ROOT', { infer: true }));
-  }
 
   private async findVisibleImage(id: string): Promise<ImageFileRow | undefined> {
     const rows = await this.database.db
@@ -62,18 +64,43 @@ export class MediaService {
     return rows[0];
   }
 
-  async serve(id: string, variant: ImageVariant): Promise<ServedImage> {
-    const row = await this.findVisibleImage(id);
+  private async findAlbumImage(
+    albumId: string,
+    imageId: string,
+  ): Promise<ImageFileRow | undefined> {
+    const rows = await this.database.db
+      .select({
+        storageKey: galleryImage.storageKey,
+        mimeType: galleryImage.mimeType,
+        byteSize: galleryImage.byteSize,
+      })
+      .from(galleryImage)
+      .where(and(eq(galleryImage.albumId, albumId), eq(galleryImage.id, imageId)))
+      .limit(1);
 
+    return rows[0];
+  }
+
+  private async serveRow(
+    row: ImageFileRow | undefined,
+    variant: ImageVariant,
+  ): Promise<ServedImage> {
     if (row === undefined) {
       throw new NotFoundException('Gambar tidak ditemukan.');
     }
 
     const storageKey = variantKeyOf(row.storageKey, variant);
-    const absolute = resolveWithinRoot(this.root(), storageKey);
+    const etag = etagOf(storageKey);
+    const remote = this.storage.deliveryUrl(storageKeysOf(row.storageKey), variant);
+
+    if (remote !== null) {
+      return { kind: 'remote', location: remote, etag };
+    }
+
+    const absolute = resolveWithinRoot(this.storage.root, storageKey);
 
     if (absolute === null) {
-      this.logger.error(`Kunci penyimpanan ditolak untuk gambar ${id}`);
+      this.logger.error('Kunci penyimpanan ditolak saat menyajikan gambar');
 
       throw new NotFoundException('Gambar tidak ditemukan.');
     }
@@ -86,15 +113,28 @@ export class MediaService {
       }
 
       return {
+        kind: 'file',
         stream: createReadStream(absolute),
         mimeType: row.mimeType,
         byteSize: info.size,
-        etag: etagOf(storageKey),
+        etag,
       };
     } catch {
-      this.logger.warn(`Berkas gambar ${id} hilang dari penyimpanan`);
+      this.logger.warn('Berkas gambar hilang dari penyimpanan');
 
       throw new NotFoundException('Gambar tidak ditemukan.');
     }
+  }
+
+  async serve(id: string, variant: ImageVariant): Promise<ServedImage> {
+    return this.serveRow(await this.findVisibleImage(id), variant);
+  }
+
+  async serveForAlbum(
+    albumId: string,
+    imageId: string,
+    variant: ImageVariant,
+  ): Promise<ServedImage> {
+    return this.serveRow(await this.findAlbumImage(albumId, imageId), variant);
   }
 }

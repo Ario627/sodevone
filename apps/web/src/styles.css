@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import '@fontsource/silkscreen/latin-400.css';
 
 @source './';
 
@@ -7,6 +8,7 @@
     ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-serif: ui-serif, Georgia, 'Times New Roman', serif;
   --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  --font-piksel: 'Silkscreen', ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --color-batu-50: #faf9f6;
   --color-batu-100: #f2f0ea;
@@ -86,12 +88,32 @@
   }
 }
 
+@utility teks-piksel {
+  font-family: var(--font-piksel);
+  font-size: 0.75rem;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  font-synthesis: none;
+  letter-spacing: 0.02em;
+  line-height: 1.7;
+  text-transform: uppercase;
+}
+
 @utility pengarah-titik {
   flex: 1 1 0%;
   min-inline-size: 1.5rem;
   margin-inline: 0.6rem;
   margin-block-end: 0.45em;
   border-block-end: 1px dotted var(--color-garis-tegas);
+}
+
+@utility pudar-bawah {
+  background-image: linear-gradient(
+    to top,
+    var(--color-latar-halaman) 12%,
+    color-mix(in oklab, var(--color-latar-halaman) 74%, transparent) 52%,
+    transparent
+  );
 }
 
 @utility scrollbar-none {
@@ -244,6 +266,19 @@
       scroll-behavior: auto !important;
     }
   }
+}
+
+.kelas-tersembunyi {
+  opacity: 0;
+  transform: translate3d(0, 0.85rem, 0);
+}
+
+.kelas-muncul {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 540ms var(--ease-keluar),
+    transform 540ms var(--ease-keluar);
 }
 
 .kelas-penampil {

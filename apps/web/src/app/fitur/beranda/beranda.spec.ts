@@ -7,6 +7,12 @@ import { Beranda } from './beranda';
 
 const KOSONG = { announcements: [], upcomingEvents: [], albums: [] };
 
+function kosongkanSosial(http: HttpTestingController): void {
+  for (const permintaan of http.match((r) => r.url === '/api/public/social')) {
+    permintaan.flush({ items: [] });
+  }
+}
+
 async function siapkan() {
   await TestBed.configureTestingModule({
     imports: [Beranda],
@@ -49,7 +55,7 @@ const ALBUM = {
 };
 
 describe('Beranda', () => {
-  it('memakai satu permintaan agregat, bukan tiga permintaan terpisah', async () => {
+  it('memakai satu permintaan agregat untuk konten utama', async () => {
     const { http } = await siapkan();
 
     const permintaan = http.expectOne('/api/public/home');
@@ -57,13 +63,62 @@ describe('Beranda', () => {
     expect(permintaan.request.method).toBe('GET');
 
     permintaan.flush(KOSONG);
+    kosongkanSosial(http);
     http.verify();
+  });
+
+  it('menyembunyikan blok media sosial saat endpoint belum tersedia', async () => {
+    const { fixture, http } = await siapkan();
+
+    http.expectOne('/api/public/home').flush(KOSONG);
+
+    for (const permintaan of http.match((r) => r.url === '/api/public/social')) {
+      permintaan.flush(
+        { error: { code: 'NOT_FOUND', message: 'Belum ada.' } },
+        { status: 404, statusText: 'Not Found' },
+      );
+    }
+
+    await fixture.whenStable();
+
+    const teks = fixture.nativeElement.textContent as string;
+
+    expect(teks).not.toContain('Dari media sosial');
+  });
+
+  it('merender mosaik media sosial ketika endpoint mengirim data', async () => {
+    const { fixture, http } = await siapkan();
+
+    http.expectOne('/api/public/home').flush(KOSONG);
+
+    for (const permintaan of http.match((r) => r.url === '/api/public/social')) {
+      permintaan.flush({
+        items: [
+          {
+            id: 'sosial-1',
+            platform: 'instagram',
+            url: 'https://instagram.com/p/contoh',
+            caption: 'Praktik laboratorium',
+            postedAt: '2026-10-29T02:00:00.000Z',
+            image: { id: null, url: 'https://cdn.contoh/a.jpg', width: 1080, height: 1350 },
+          },
+        ],
+      });
+    }
+
+    await fixture.whenStable();
+
+    const teks = fixture.nativeElement.textContent as string;
+
+    expect(teks).toContain('Dari media sosial');
+    expect(teks).toContain('Instagram');
   });
 
   it('menampilkan pesan untuk blok yang kosong tanpa menyembunyikannya', async () => {
     const { fixture, http } = await siapkan();
 
     http.expectOne('/api/public/home').flush(KOSONG);
+    kosongkanSosial(http);
     await fixture.whenStable();
 
     const teks = fixture.nativeElement.textContent as string;
@@ -76,6 +131,7 @@ describe('Beranda', () => {
     const { fixture, http } = await siapkan();
 
     http.expectOne('/api/public/home').flush(KOSONG);
+    kosongkanSosial(http);
     await fixture.whenStable();
 
     const teks = fixture.nativeElement.textContent as string;
@@ -90,6 +146,7 @@ describe('Beranda', () => {
       .expectOne('/api/public/home')
       .flush({ announcements: [PENGUMUMAN], upcomingEvents: [KEGIATAN], albums: [ALBUM] });
 
+    kosongkanSosial(http);
     await fixture.whenStable();
 
     const teks = fixture.nativeElement.textContent as string;
@@ -108,6 +165,7 @@ describe('Beranda', () => {
       .expectOne('/api/public/home')
       .flush({ announcements: [PENGUMUMAN], upcomingEvents: [KEGIATAN], albums: [ALBUM] });
 
+    kosongkanSosial(http);
     await fixture.whenStable();
 
     const jalur = Array.from(
@@ -129,6 +187,7 @@ describe('Beranda', () => {
         { status: 503, statusText: 'Service Unavailable' },
       );
 
+    kosongkanSosial(http);
     await fixture.whenStable();
 
     const teks = fixture.nativeElement.textContent as string;
@@ -146,6 +205,7 @@ describe('Beranda', () => {
       albums: [],
     });
 
+    kosongkanSosial(http);
     await fixture.whenStable();
 
     expect((fixture.nativeElement.textContent as string).includes('Lampau')).toBe(false);

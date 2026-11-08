@@ -6,3 +6,4 @@ export * from './columns.js';
 export * from './event.js';
 export * from './gallery.js';
 export * from './slug-redirect.js';
+export * from './social-link.js';

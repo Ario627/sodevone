@@ -2,10 +2,9 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { Logger, NotFoundException } from '@nestjs/common';
-import type { ConfigService } from '@nestjs/config';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Env } from '../config/env.js';
 import type { DatabaseService } from '../db/database.service.js';
+import type { MediaStorageService } from './media-storage.service.js';
 import { MediaService } from './media.service.js';
 
 const IMAGE_ID = '8f14e45f-ceea-467f-a8d3-1b7c1e1d9b21';
@@ -20,7 +19,16 @@ type Baris = { storageKey: string; mimeType: string; byteSize: number };
 
 let root: string;
 
-function serviceDengan(baris: Baris | undefined): MediaService {
+function storageLokal(): MediaStorageService {
+  return {
+    driver: 'local',
+    remote: false,
+    root,
+    deliveryUrl: () => null,
+  } as unknown as MediaStorageService;
+}
+
+function serviceDengan(baris: Baris | undefined, storage = storageLokal()): MediaService {
   const chain = {
     select: () => chain,
     from: () => chain,
@@ -31,11 +39,7 @@ function serviceDengan(baris: Baris | undefined): MediaService {
 
   const database = { db: chain } as unknown as DatabaseService;
 
-  const config = {
-    get: (key: string) => (key === 'MEDIA_ROOT' ? root : undefined),
-  } as unknown as ConfigService<Env, true>;
-
-  return new MediaService(database, config);
+  return new MediaService(database, storage);
 }
 
 const BARIS_SAH: Baris = {
@@ -65,6 +69,12 @@ describe('MediaService', () => {
   it('menyajikan turunan sedang dengan tipe dari basis data', async () => {
     const hasil = await serviceDengan(BARIS_SAH).serve(IMAGE_ID, 'sedang');
 
+    expect(hasil.kind).toBe('file');
+
+    if (hasil.kind !== 'file') {
+      throw new Error('seharusnya berkas lokal');
+    }
+
     expect(hasil.mimeType).toBe('image/webp');
     expect(hasil.byteSize).toBe(SEDANG_BYTES);
 
@@ -73,6 +83,10 @@ describe('MediaService', () => {
 
   it('memakai ukuran berkas sebenarnya pada turunan kecil', async () => {
     const hasil = await serviceDengan(BARIS_SAH).serve(IMAGE_ID, 'kecil');
+
+    if (hasil.kind !== 'file') {
+      throw new Error('seharusnya berkas lokal');
+    }
 
     expect(hasil.byteSize).toBe(KECIL_BYTES);
 
@@ -84,7 +98,28 @@ describe('MediaService', () => {
 
     expect(hasil.etag).toMatch(/^"[-a-zA-Z0-9]+"$/);
 
-    hasil.stream.destroy();
+    if (hasil.kind === 'file') {
+      hasil.stream.destroy();
+    }
+  });
+
+  it('mengalihkan ke CDN saat driver penyimpanan remote', async () => {
+    const remote = {
+      driver: 'cloudinary',
+      remote: true,
+      root,
+      deliveryUrl: () => 'https://cdn.contoh.test/album-a/foto-sedang.webp',
+    } as unknown as MediaStorageService;
+
+    const hasil = await serviceDengan(BARIS_SAH, remote).serve(IMAGE_ID, 'sedang');
+
+    expect(hasil.kind).toBe('remote');
+
+    if (hasil.kind !== 'remote') {
+      throw new Error('seharusnya pengalihan');
+    }
+
+    expect(hasil.location).toBe('https://cdn.contoh.test/album-a/foto-sedang.webp');
   });
 
   it('menolak gambar yang tidak ada atau albumnya belum terbit', async () => {

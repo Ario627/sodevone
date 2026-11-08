@@ -12,7 +12,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "db:migrate": "dotenv -e .env -- nest build && node dist/db/migrate.js",
+    "db:migrate": "nest build && dotenv -e .env -- node dist/db/migrate.js",
+    "db:seed": "nest build && dotenv -e .env -- node dist/db/seed-admin.js",
+    "db:sweep-media": "nest build && dotenv -e .env -- node dist/db/sweep-media.js",
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio"
   },

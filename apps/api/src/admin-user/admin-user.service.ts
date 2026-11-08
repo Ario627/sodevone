@@ -96,12 +96,13 @@ export class AdminUserService {
     context: RequestContext,
     action: string,
     entityId: string,
+    entityType: 'user' | 'session' = 'user',
   ): AuditEntryInput {
     return {
       actorId: actor.userId,
       actorLabel: actor.username,
       action,
-      entityType: 'user',
+      entityType,
       entityId,
       ipHash: context.ipHash,
       correlationId: context.correlationId,
@@ -209,6 +210,10 @@ export class AdminUserService {
 
       if (deactivating) {
         await this.auth.revokeSessionsOfUserWithin(tx, id, now);
+        await this.audit.recordWithin(
+          tx,
+          this.auditOf(actor, context, 'session_revoked', id, 'session'),
+        );
       }
 
       await this.audit.recordWithin(tx, this.auditOf(actor, context, action, id));

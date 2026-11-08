@@ -28,6 +28,7 @@ export const AUDIT_ENTITY_TYPES = [
   'image',
   'user',
   'session',
+  'social',
 ] as const;
 
 export const auditLog = pgTable(

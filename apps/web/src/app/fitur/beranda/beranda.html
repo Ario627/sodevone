@@ -1,27 +1,72 @@
-<section class="border-b border-garis-halus pb-10 lg:pb-12">
+<section
+  class="border-b border-garis-halus pb-10 lg:pb-12"
+  (pointermove)="gerakkan($event)"
+  (pointerleave)="kembalikan()"
+>
   <div class="grid gap-9 lg:grid-cols-12 lg:items-end lg:gap-12">
     <div class="lg:col-span-8">
-      <p class="teks-meta bertanda text-sinyal">Kelas &middot; Situs resmi</p>
-      <h1 class="mt-5 font-serif text-[clamp(2.75rem,7.5vw,4.75rem)] leading-[0.88] tracking-[-0.04em]">
-        XI&nbsp;PPLG&nbsp;1
+      <h1
+        class="mt-5 font-serif text-[clamp(2.75rem,7.5vw,4.75rem)] leading-[0.88] tracking-[-0.04em]"
+      >
+        <kelas-teks-dekode [teks]="judul" />
       </h1>
-      <p class="mt-6 max-w-[30rem] text-md text-teks-kuat-sekunder">
-        Pengumuman, agenda, dan dokumentasi kegiatan kelas dalam satu tempat.
-      </p>
+
+      <div class="mt-6 flex flex-wrap items-center gap-x-5 gap-y-1">
+        <a
+          routerLink="/kelas"
+          class="teks-meta group inline-flex min-h-11 items-center gap-2 border-b border-sinyal text-sinyal"
+        >
+          Masuk ke ruang kelas
+          
+        </a>
+
+        <button
+          type="button"
+          (click)="bukaCatatan()"
+          class="teks-meta inline-flex min-h-11 items-center gap-2 border-b border-garis-tegas text-teks-sekunder transition-colors duration-100 ease-keluar hover:border-sinyal hover:text-sinyal"
+        >
+          Apa isi situs ini
+        </button>
+      </div>
     </div>
 
-    <dl class="grid grid-cols-3 gap-px border border-garis-halus bg-garis-halus lg:col-span-4">
-      @for (kode of kodeKelas; track kode.label) {
-        <div class="bg-latar-halaman px-3 py-3.5 sm:px-4">
-          <dt class="teks-meta text-teks-sekunder">{{ kode.label }}</dt>
-          <dd class="mt-1.5 font-mono text-[1.625rem] leading-none tracking-[-0.06em]">
-            {{ kode.nilai }}
-          </dd>
+    <div class="lg:col-span-4">
+      <figure class="mb-3 hidden lg:block">
+        <div class="overflow-hidden border border-garis-halus bg-latar-sekunder">
+          <kelas-voxel-monogram class="block aspect-[16/11] w-full" teks="XI" />
         </div>
-      }
-    </dl>
+        <figcaption
+          class="teks-piksel mt-1.5 flex items-baseline justify-between gap-3 text-teks-sekunder"
+        >
+          <span>Monogram kelas</span>
+          <span aria-hidden="true">5 &times; 7</span>
+        </figcaption>
+      </figure>
+
+      <dl
+        #spesimen
+        class="grid grid-cols-3 gap-px border border-garis-halus bg-garis-halus transition-transform duration-200 ease-keluar motion-reduce:transform-none"
+        style="transform: translate3d(var(--geser-x, 0px), var(--geser-y, 0px), 0)"
+      >
+        @for (kode of kodeKelas; track kode.label) {
+          <div class="bg-latar-halaman px-3 py-3.5 sm:px-4">
+            <dt class="teks-meta text-teks-sekunder">{{ kode.label }}</dt>
+            <dd class="mt-1.5 font-mono text-[1.625rem] leading-none tracking-[-0.06em]">
+              {{ kode.nilai }}
+            </dd>
+          </div>
+        }
+      </dl>
+    </div>
   </div>
 </section>
+
+<kelas-papan-status
+  class="mt-8 block"
+  [mulai]="berikutnya()?.startsAt"
+  [judul]="berikutnya()?.title ?? ''"
+/>
+
 
 @if (sedangMemuat()) {
   <kelas-memuat class="mt-10" pesan="Memuat ringkasan terbaru" [jumlah]="3" />
@@ -49,6 +94,7 @@
     } @else if (lead(); as utama) {
       <a
         [routerLink]="['/pengumuman', utama.slug]"
+        kelasMuncul
         class="group mt-4 grid gap-3 border-t border-garis-halus pt-5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-8"
       >
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 sm:flex-col sm:gap-1.5">
@@ -69,8 +115,8 @@
 
       @if (lainnya().length > 0) {
         <ul class="mt-6 border-t border-garis-halus">
-          @for (pengumuman of lainnya(); track pengumuman.slug) {
-            <li class="border-b border-garis-halus">
+          @for (pengumuman of lainnya(); track pengumuman.slug; let i = $index) {
+            <li class="border-b border-garis-halus" [kelasMuncul]="i * 55">
               <a
                 [routerLink]="['/pengumuman', pengumuman.slug]"
                 class="group flex items-baseline gap-3 py-3.5"
@@ -110,8 +156,8 @@
       </p>
     } @else {
       <ul class="mt-4 border-t border-garis-halus">
-        @for (kegiatan of ringkasan.upcomingEvents; track kegiatan.slug) {
-          <li class="border-b border-garis-halus">
+        @for (kegiatan of ringkasan.upcomingEvents; track kegiatan.slug; let i = $index) {
+          <li class="border-b border-garis-halus" [kelasMuncul]="i * 55">
             <a
               [routerLink]="['/agenda', kegiatan.slug]"
               class="group grid grid-cols-[3.5rem_minmax(0,1fr)] items-start gap-3 py-4 sm:grid-cols-[4rem_minmax(0,1fr)] sm:gap-0"
@@ -120,7 +166,11 @@
                 <kelas-stempel-tanggal [nilai]="kegiatan.startsAt" />
               </div>
 
-              <div class="min-w-0 sm:pl-6">
+              <div class="relative min-w-0 sm:pl-7">
+                <span
+                  aria-hidden="true"
+                  class="absolute left-0 top-2 hidden h-1.5 w-1.5 bg-garis-tegas transition-colors duration-150 ease-keluar group-hover:bg-sinyal sm:block"
+                ></span>
                 <h3
                   class="font-serif text-lg leading-snug tracking-[-0.01em] underline-offset-4 group-hover:underline"
                 >
@@ -151,45 +201,59 @@
         tautan="/galeri"
       />
 
-      <ul class="mt-4 grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 sm:gap-x-6">
-        @for (album of ringkasan.albums; track album.slug; let indeks = $index) {
-          <li>
-            <a [routerLink]="['/galeri', album.slug]" class="group block">
-              <span class="block border border-garis-halus bg-latar-sekunder">
-                @if (album.cover; as sampul) {
-                  <img
-                    [src]="sumberSampul(sampul.id)"
-                    [attr.srcset]="srcsetSampul(sampul.id)"
-                    sizes="(min-width: 40rem) 22rem, 45vw"
-                    [attr.width]="sampul.width"
-                    [attr.height]="sampul.height"
-                    [attr.alt]="sampul.altText ?? album.title"
-                    [attr.loading]="indeks < 3 ? 'eager' : 'lazy'"
-                    [attr.fetchpriority]="indeks === 0 ? 'high' : undefined"
-                    decoding="async"
-                    class="aspect-[4/3] w-full object-cover transition-opacity duration-150 ease-keluar group-hover:opacity-90 motion-reduce:transition-none"
-                  />
-                } @else {
-                  <span
-                    class="teks-meta flex aspect-[4/3] items-center justify-center px-3 text-center text-teks-sekunder"
-                  >
-                    Tanpa sampul
-                  </span>
-                }
-              </span>
-              <span class="teks-meta mt-3 flex items-baseline gap-2 text-teks-sekunder">
-                <span aria-hidden="true" class="text-garis-tegas">{{ nomorUrut(indeks + 1) }}</span>
-                <span>{{ album.imageCount }} foto</span>
-              </span>
-              <span
-                class="mt-1 block font-serif text-base leading-snug tracking-[-0.01em] underline-offset-4 group-hover:underline"
+      <div class="mt-6">
+        <ul class="grid gap-0 border-t border-garis-halus">
+          @for (album of ringkasan.albums; track album.slug; let i = $index) {
+            <li class="border-b border-garis-halus" [kelasMuncul]="i * 45">
+              <a
+                [routerLink]="['/galeri', album.slug]"
+                class="group flex items-baseline gap-3 py-3.5"
               >
-                {{ album.title }}
-              </span>
-            </a>
-          </li>
-        }
-      </ul>
+                <span aria-hidden="true" class="text-garis-tegas">
+                  <kelas-angka-piksel [teks]="nomorUrut(i + 1)" [tinggi]="10" />
+                </span>
+                <span
+                  class="min-w-0 truncate font-serif text-base tracking-[-0.01em] underline-offset-4 group-hover:underline"
+                >
+                  {{ album.title }}
+                </span>
+                <span aria-hidden="true" class="pengarah-titik hidden sm:block"></span>
+                <span class="teks-meta shrink-0 text-teks-sekunder">{{ album.imageCount }} foto</span>
+              </a>
+            </li>
+          }
+        </ul>
+      </div>
     </section>
   }
+
 }
+
+@if (sosial().length > 0) {
+  <section aria-labelledby="sosial-judul" class="pt-12">
+    <kelas-kepala-bagian
+      nomor="04"
+      judul="Dari media sosial"
+      judulId="sosial-judul"
+      [jumlah]="sosial().length + ' unggahan'"
+    />
+
+    <kelas-sosial-mosaik class="mt-5 block" [postingan]="sosial()" />
+  </section>
+}
+
+<section aria-labelledby="kosong-judul" class="pt-12">
+  <kelas-kepala-bagian
+    nomor="05"
+    judul="Jam kosong"
+    judulId="kosong-judul"
+    jumlah="lempar kertas ke tempat sampah"
+  />
+
+  <p class="mt-4 max-w-[46ch] text-sm leading-relaxed text-teks-kuat-sekunder">
+    Tidak ada yang dikerjakan, jadi begini. Tarik dari bola kertas, arahkan, lalu lepas. Tidak ada
+    hadiah, cuma angka yang bertambah.
+  </p>
+
+  <kelas-arena-kertas class="mt-5 block" />
+</section>

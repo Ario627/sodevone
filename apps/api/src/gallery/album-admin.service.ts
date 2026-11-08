@@ -1,6 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
-import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   MAX_IMAGE_UPLOAD_BYTES,
@@ -26,13 +32,13 @@ import type { Executor } from '../db/executor.js';
 import { isUniqueViolation } from '../db/pg-error.js';
 import { storageKeysOf } from '../media/image-keys.js';
 import { processImage } from '../media/image-processor.js';
-import { removeImageFiles, writeImageFiles } from '../media/image-store.js';
+import { MediaStorageService } from '../media/media-storage.service.js';
 import { AlbumAdminRepository } from './album-admin.repository.js';
 import type { AlbumAdminRow, AlbumPatch } from './album-admin.repository.js';
 import { AlbumImageRepository } from './album-image.repository.js';
 import type { AlbumImageRow } from './album-image.repository.js';
 import { assertAlbumTransition } from './album-status.js';
-import { toAlbumAdminDetail, toAlbumAdminPage } from './album.mapper.js';
+import { toAlbumAdminDetail, toAlbumAdminPage, toAlbumImages } from './album.mapper.js';
 
 const DRAFT_STATUS: AlbumStatus = 'draft';
 
@@ -107,13 +113,10 @@ export class AlbumAdminService {
     private readonly images: AlbumImageRepository,
     private readonly audit: AuditRepository,
     private readonly database: DatabaseService,
+    private readonly storage: MediaStorageService,
     private readonly config: ConfigService<Env, true>,
   ) {
     this.limiter = new Semaphore(config.get('IMAGE_UPLOAD_CONCURRENCY', { infer: true }));
-  }
-
-  private root(): string {
-    return path.resolve(this.config.get('MEDIA_ROOT', { infer: true }));
   }
 
   private auditOf(
@@ -196,7 +199,7 @@ export class AlbumAdminService {
     const keys = storageKeysOf(storageKey);
 
     try {
-      await writeImageFiles(this.root(), keys, processed.image);
+      await this.storage.write(keys, processed.image);
     } catch {
       return { kind: 'rejected', reason: STORE_FAILED_REASON };
     }
@@ -222,7 +225,7 @@ export class AlbumAdminService {
         );
       });
     } catch (error) {
-      await removeImageFiles(this.root(), keys).catch(() => undefined);
+      await this.storage.remove(keys).catch(() => undefined);
 
       throw error;
     }
@@ -389,6 +392,45 @@ export class AlbumAdminService {
     return { ...image, altText };
   }
 
+  async reorderImages(
+    albumId: string,
+    ids: string[],
+    actor: SessionContext,
+    context: RequestContext,
+  ): Promise<GalleryImage[]> {
+    const album = await this.requireAlbum(this.database.db, albumId);
+
+    if (album.status === ARCHIVED_STATUS) {
+      throw new ConflictException({ code: 'CONFLICT', message: ARCHIVED_EDIT_MESSAGE });
+    }
+
+    const existing = await this.images.findMany(this.database.db, albumId);
+    const known = new Set(existing.map((image) => image.id));
+    const requested = new Set(ids);
+
+    if (requested.size !== ids.length) {
+      throw new BadRequestException({
+        code: 'VALIDATION_FAILED',
+        message: 'Daftar urutan memuat foto yang sama lebih dari sekali.',
+        fields: [{ path: 'ids', message: 'Setiap foto hanya boleh muncul sekali.' }],
+      });
+    }
+
+    if (requested.size !== known.size || ids.some((id) => !known.has(id))) {
+      throw new ConflictException({
+        code: 'CONFLICT',
+        message: 'Daftar urutan harus memuat seluruh foto album saat ini. Muat ulang lalu ulangi.',
+      });
+    }
+
+    await this.database.db.transaction(async (tx) => {
+      await this.images.applyOrder(tx, albumId, ids);
+      await this.audit.recordWithin(tx, this.auditOf(actor, context, 'update', 'album', albumId));
+    });
+
+    return toAlbumImages(await this.images.findMany(this.database.db, albumId));
+  }
+
   async deleteImage(
     albumId: string,
     imageId: string,
@@ -416,7 +458,7 @@ export class AlbumAdminService {
       return deleted;
     });
 
-    await removeImageFiles(this.root(), storageKeysOf(removed.storageKey)).catch(() => {
+    await this.storage.remove(storageKeysOf(removed.storageKey)).catch(() => {
       this.logger.warn(`Berkas foto ${imageId} gagal dihapus dan perlu dibersihkan manual`);
     });
   }

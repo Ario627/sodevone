@@ -7,7 +7,7 @@ import type { RequestContext } from '../common/http/request-context.js';
 import type { Env } from '../config/env.js';
 import type { DatabaseService } from '../db/database.service.js';
 import { processImage } from '../media/image-processor.js';
-import { removeImageFiles, writeImageFiles } from '../media/image-store.js';
+import type { MediaStorageService } from '../media/media-storage.service.js';
 import { AlbumAdminRepository } from './album-admin.repository.js';
 import type { AlbumAdminRow } from './album-admin.repository.js';
 import { AlbumAdminService } from './album-admin.service.js';
@@ -16,10 +16,14 @@ import type { AlbumImageRow } from './album-image.repository.js';
 
 vi.mock('../media/image-processor.js', () => ({ processImage: vi.fn() }));
 
-vi.mock('../media/image-store.js', () => ({
-  writeImageFiles: vi.fn(),
-  removeImageFiles: vi.fn(),
-}));
+const storage = {
+  write: vi.fn(),
+  remove: vi.fn(),
+  deliveryUrl: () => null,
+  driver: 'local',
+  remote: false,
+  root: '/tmp/kelas-media-uji',
+} as unknown as MediaStorageService;
 
 const ALBUM_ID = '11111111-1111-4111-8111-111111111111';
 
@@ -94,11 +98,13 @@ function buatService(opsi: { album?: AlbumAdminRow; images?: AlbumImageRow[] } =
     get: (key: string) => (key === 'MEDIA_ROOT' ? '/tmp/kelas-media-uji' : 2),
   } as unknown as ConfigService<Env, true>;
 
+
   const service = new AlbumAdminService(
     albums as unknown as AlbumAdminRepository,
     imageRepository as unknown as AlbumImageRepository,
     audit as unknown as AuditRepository,
     database as unknown as DatabaseService,
+    storage,
     config,
   );
 
@@ -107,8 +113,8 @@ function buatService(opsi: { album?: AlbumAdminRow; images?: AlbumImageRow[] } =
 
 beforeEach(() => {
   vi.mocked(processImage).mockReset();
-  vi.mocked(writeImageFiles).mockReset().mockResolvedValue(undefined);
-  vi.mocked(removeImageFiles).mockReset().mockResolvedValue(undefined);
+  vi.mocked(storage.write).mockReset().mockResolvedValue(undefined);
+  vi.mocked(storage.remove).mockReset().mockResolvedValue(undefined);
 });
 
 describe('AlbumAdminService.reorderImages', () => {

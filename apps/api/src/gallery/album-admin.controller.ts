@@ -24,8 +24,10 @@ import { Throttle } from '@nestjs/throttler';
 import {
   AlbumAdminListQuerySchema,
   AlbumCreateSchema,
+  AlbumImageOrderSchema,
   AlbumUpdateSchema,
   ImageAltUpdateSchema,
+  ImageVariantSchema,
   MAX_IMAGE_UPLOAD_BYTES,
   MAX_IMAGES_PER_REQUEST,
   UuidSchema,
@@ -33,10 +35,12 @@ import {
   type AlbumAdminListQuery,
   type AlbumAdminPage,
   type AlbumCreate,
+  type AlbumImageOrder,
   type AlbumUpdate,
   type GalleryImage,
   type ImageAltUpdate,
   type ImageUploadResult,
+  type ImageVariant,
 } from '@kelas/contracts';
 import type { Request, Response } from 'express';
 import { AuthGuard, CurrentSession, Roles, RolesGuard } from '../auth/auth.guard.js';
@@ -45,6 +49,7 @@ import type { RequestContext } from '../common/http/request-context.js';
 import { requestContextOf } from '../common/http/request-context.js';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe.js';
 import type { Env } from '../config/env.js';
+import { MediaService } from '../media/media.service.js';
 import { AlbumAdminService } from './album-admin.service.js';
 import type { UploadedFile } from './album-admin.service.js';
 
@@ -62,6 +67,14 @@ const UPLOAD_LIMITS = {
 };
 
 const ALBUM_IMAGE_ROUTE = ':id/images/:imageId';
+
+const ALBUM_IMAGE_MEDIA_ROUTE = ':id/images/:imageId/media';
+
+const PREVIEW_VARIANT: ImageVariant = 'kecil';
+
+const PREVIEW_CACHE = 'private, max-age=60';
+
+const PREVIEW_VARIANT_QUERY = ImageVariantSchema.catch(PREVIEW_VARIANT);
 
 function adminHeaders(): MethodDecorator {
   return applyDecorators(
@@ -87,6 +100,7 @@ function imageLocationOf(albumId: string, imageId: string): string {
 export class AlbumAdminController {
   constructor(
     private readonly service: AlbumAdminService,
+    private readonly media: MediaService,
     private readonly config: ConfigService<Env, true>,
   ) {}
 
@@ -202,6 +216,59 @@ export class AlbumAdminController {
     @Req() request: Request,
   ): Promise<ImageUploadResult> {
     return this.service.uploadImages(id, files ?? [], session, this.contextOf(request));
+  }
+
+  @Get(ALBUM_IMAGE_MEDIA_ROUTE)
+  @adminHeaders()
+  @ApiOperation({ summary: 'Menyajikan foto album untuk pratinjau panel, termasuk album draf' })
+  @ApiParam({ name: 'id', description: 'UUID album' })
+  @ApiParam({ name: 'imageId', description: 'UUID foto' })
+  @ApiOkResponse({ description: 'Berkas gambar dengan cache privat' })
+  async preview(
+    @Param('id', new ZodValidationPipe(UuidSchema)) id: string,
+    @Param('imageId', new ZodValidationPipe(UuidSchema)) imageId: string,
+    @Query('ukuran', new ZodValidationPipe(PREVIEW_VARIANT_QUERY)) variant: ImageVariant,
+    @Res() response: Response,
+  ): Promise<void> {
+    const image = await this.media.serveForAlbum(id, imageId, variant);
+
+    response.setHeader('Cache-Control', PREVIEW_CACHE);
+    response.setHeader('X-Content-Type-Options', 'nosniff');
+    response.setHeader('ETag', image.etag);
+
+    const ifNoneMatch = response.req.headers['if-none-match'];
+
+    if (typeof ifNoneMatch === 'string' && ifNoneMatch === image.etag) {
+      response.status(HttpStatus.NOT_MODIFIED).end();
+
+      return;
+    }
+
+    if (image.kind === 'remote') {
+      response.redirect(HttpStatus.FOUND, image.location);
+
+      return;
+    }
+
+    response.setHeader('Content-Type', image.mimeType);
+    response.setHeader('Content-Disposition', 'inline');
+    response.setHeader('Content-Length', String(image.byteSize));
+    image.stream.on('error', () => response.destroy());
+    image.stream.pipe(response);
+  }
+
+  @Patch(':id/image-order')
+  @writeRoute()
+  @ApiOperation({ summary: 'Menyimpan urutan foto album sekali jalan' })
+  @ApiParam({ name: 'id', description: 'UUID album' })
+  @ApiOkResponse({ description: 'Seluruh foto album dalam urutan yang baru' })
+  reorder(
+    @Param('id', new ZodValidationPipe(UuidSchema)) id: string,
+    @Body(new ZodValidationPipe(AlbumImageOrderSchema)) body: AlbumImageOrder,
+    @CurrentSession() session: SessionContext,
+    @Req() request: Request,
+  ): Promise<GalleryImage[]> {
+    return this.service.reorderImages(id, body.ids, session, this.contextOf(request));
   }
 
   @Patch(ALBUM_IMAGE_ROUTE)

@@ -8,7 +8,7 @@ import type { Env } from '../config/env.js';
 import type { DatabaseService } from '../db/database.service.js';
 import type { ProcessedImage } from '../media/image-processor.js';
 import { processImage } from '../media/image-processor.js';
-import { removeImageFiles, writeImageFiles } from '../media/image-store.js';
+import type { MediaStorageService } from '../media/media-storage.service.js';
 import { AlbumAdminRepository } from './album-admin.repository.js';
 import type { AlbumAdminRow } from './album-admin.repository.js';
 import { AlbumAdminService } from './album-admin.service.js';
@@ -17,10 +17,14 @@ import type { AlbumImageRow } from './album-image.repository.js';
 
 vi.mock('../media/image-processor.js', () => ({ processImage: vi.fn() }));
 
-vi.mock('../media/image-store.js', () => ({
-  writeImageFiles: vi.fn(),
-  removeImageFiles: vi.fn(),
-}));
+const storage = {
+  write: vi.fn(),
+  remove: vi.fn(),
+  deliveryUrl: () => null,
+  driver: 'local',
+  remote: false,
+  root: '/tmp/kelas-media-uji',
+} as unknown as MediaStorageService;
 
 const ALBUM_ID = '11111111-1111-4111-8111-111111111111';
 
@@ -127,6 +131,7 @@ function buatService(opsi: Opsi = {}) {
     images as unknown as AlbumImageRepository,
     audit as unknown as AuditRepository,
     database as unknown as DatabaseService,
+    storage,
     config,
   );
 
@@ -135,8 +140,8 @@ function buatService(opsi: Opsi = {}) {
 
 beforeEach(() => {
   vi.mocked(processImage).mockReset();
-  vi.mocked(writeImageFiles).mockReset().mockResolvedValue(undefined);
-  vi.mocked(removeImageFiles).mockReset().mockResolvedValue(undefined);
+  vi.mocked(storage.write).mockReset().mockResolvedValue(undefined);
+  vi.mocked(storage.remove).mockReset().mockResolvedValue(undefined);
 });
 
 describe('AlbumAdminService.create', () => {
@@ -413,7 +418,7 @@ describe('AlbumAdminService.uploadImages', () => {
 
   it('melaporkan kegagalan tulis berkas sebagai kegagalan per berkas', async () => {
     vi.mocked(processImage).mockResolvedValue({ ok: true, image: processedOf() });
-    vi.mocked(writeImageFiles).mockRejectedValue(new Error('disk penuh'));
+    vi.mocked(storage.write).mockRejectedValue(new Error('disk penuh'));
 
     const { service, images } = buatService();
 
@@ -444,7 +449,7 @@ describe('AlbumAdminService.uploadImages', () => {
         KONTEKS,
       ),
     ).rejects.toThrow('basis data mati');
-    expect(removeImageFiles).toHaveBeenCalledTimes(1);
+    expect(storage.remove).toHaveBeenCalledTimes(1);
   });
 
   it('membuang jalur direktori dari nama berkas yang dilaporkan', async () => {
@@ -510,7 +515,7 @@ describe('AlbumAdminService.deleteImage', () => {
       tx,
       expect.objectContaining({ action: 'delete', entityType: 'image', entityId: IMAGE_ID }),
     );
-    expect(removeImageFiles).toHaveBeenCalledWith('/tmp/kelas-media-uji', {
+    expect(storage.remove).toHaveBeenCalledWith({
       master: `${ALBUM_ID}/${IMAGE_ID}.webp`,
       medium: `${ALBUM_ID}/${IMAGE_ID}-sedang.webp`,
       small: `${ALBUM_ID}/${IMAGE_ID}-kecil.webp`,
@@ -526,11 +531,11 @@ describe('AlbumAdminService.deleteImage', () => {
     await expect(service.deleteImage(ALBUM_ID, IMAGE_ID, AKTOR, KONTEKS)).rejects.toBeInstanceOf(
       NotFoundException,
     );
-    expect(removeImageFiles).not.toHaveBeenCalled();
+    expect(storage.remove).not.toHaveBeenCalled();
   });
 
   it('tidak menggagalkan permintaan ketika berkas fisik tidak dapat dihapus', async () => {
-    vi.mocked(removeImageFiles).mockRejectedValue(new Error('izin ditolak'));
+    vi.mocked(storage.remove).mockRejectedValue(new Error('izin ditolak'));
 
     const { service } = buatService({
       album: albumRowOf({ status: 'archived', publishedAt: WAKTU }),

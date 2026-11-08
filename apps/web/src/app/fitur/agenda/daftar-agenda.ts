@@ -9,10 +9,11 @@ import { KepalaBagian } from '../../komponen/kepala-bagian/kepala-bagian';
 import { Kosong } from '../../komponen/kosong/kosong';
 import { Memuat } from '../../komponen/memuat/memuat';
 import { StempelTanggal } from '../../komponen/stempel-tanggal/stempel-tanggal';
+import { Muncul } from '../../inti/gerak/muncul';
 
 @Component({
   selector: 'kelas-daftar-agenda',
-  imports: [RouterLink, Memuat, Kosong, GalatMuat, KepalaBagian, StempelTanggal],
+  imports: [RouterLink, Memuat, Kosong, GalatMuat, KepalaBagian, StempelTanggal, Muncul],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './daftar-agenda.html',
 })

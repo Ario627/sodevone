@@ -1,16 +1,20 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { AngkaPiksel } from '../angka-piksel/angka-piksel';
+import { TeksDekode } from '../teks-dekode/teks-dekode';
 
 @Component({
   selector: 'kelas-kepala-bagian',
-  imports: [RouterLink],
+  imports: [RouterLink, TeksDekode, AngkaPiksel],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
   template: `
     <div class="flex items-baseline justify-between gap-4">
       <h2 [id]="judulId()" class="flex min-w-0 items-baseline gap-2.5">
-        <span aria-hidden="true" class="teks-meta shrink-0 text-sinyal">{{ nomor() }}</span>
-        <span class="teks-meta text-balance text-teks-kuat-sekunder">{{ judul() }}</span>
+        <span class="shrink-0 text-sinyal" aria-hidden="true">
+          <kelas-angka-piksel [teks]="nomor()" [tinggi]="18" />
+        </span>
+        <kelas-teks-dekode class="teks-meta text-balance text-teks-kuat-sekunder" [teks]="judul()" />
       </h2>
 
       <span aria-hidden="true" class="mb-[0.35em] hidden h-px flex-1 bg-garis-halus sm:block"></span>

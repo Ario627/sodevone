@@ -28,6 +28,7 @@ export const AuditEntityTypeSchema = z.enum([
   'image',
   'user',
   'session',
+  'social',
 ]);
 
 export type AuditEntityType = z.infer<typeof AuditEntityTypeSchema>;

@@ -2,6 +2,14 @@ import { z } from 'zod';
 
 const DATABASE_URL_PATTERN = /^postgres(ql)?:\/\/[^\s]+$/;
 
+function optionalText(max: number) {
+  return z
+    .string()
+    .max(max)
+    .optional()
+    .transform((value) => (value === undefined || value.length === 0 ? undefined : value));
+}
+
 export const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
@@ -36,6 +44,11 @@ export const EnvSchema = z.object({
   PASSWORD_BREACH_CHECK: z.enum(['enabled', 'disabled']).default('enabled'),
   PASSWORD_BREACH_TIMEOUT_MS: z.coerce.number().int().min(200).max(10_000).default(2_500),
   IMAGE_UPLOAD_CONCURRENCY: z.coerce.number().int().min(1).max(8).default(2),
+  SWEEP_GRACE_MINUTES: z.coerce.number().int().min(0).max(10_080).default(60),
+  MEDIA_DRIVER: z.enum(['local', 'cloudinary']).default('local'),
+  CLOUDINARY_CLOUD_NAME: optionalText(120),
+  CLOUDINARY_API_KEY: optionalText(120),
+  CLOUDINARY_API_SECRET: optionalText(200),
 });
 
 export type Env = z.infer<typeof EnvSchema>;
@@ -51,6 +64,7 @@ export function parseEnv(raw: Record<string, unknown>): Env {
   }
 
   assertProductionSecrets(result.data);
+  assertMediaDriver(result.data);
 
   return result.data;
 }
@@ -93,6 +107,19 @@ export function assertProductionSecrets(env: Env): void {
 
   if (env.COOKIE_SECURE === 'never') {
     throw new Error('COOKIE_SECURE tidak boleh never pada lingkungan produksi');
+  }
+}
+
+export function assertMediaDriver(env: Env): void {
+  if (env.MEDIA_DRIVER !== 'cloudinary') {
+    return;
+  }
+
+  const missing = (['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET'] as const)
+    .filter((key) => env[key] === undefined);
+
+  if (missing.length > 0) {
+    throw new Error(`MEDIA_DRIVER=cloudinary membutuhkan ${missing.join(', ')}`);
   }
 }
 

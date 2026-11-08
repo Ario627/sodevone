@@ -1,5 +1,8 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { KartuPembuat } from '../../komponen/kartu-pembuat/kartu-pembuat';
+import { MejaKerja } from '../../komponen/meja-kerja/meja-kerja';
+import { PEMBUAT } from '../../inti/pembuat';
 
 const JALUR = [
   {
@@ -30,8 +33,19 @@ const KODE_KELAS = [
 
 @Component({
   selector: 'kelas-tentang',
-  imports: [RouterLink],
+  imports: [RouterLink, KartuPembuat, MejaKerja],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  styles: `
+    .bingkai-meja {
+      border: 1px solid var(--color-garis-halus);
+      background-color: var(--color-latar-sekunder);
+      background-image: radial-gradient(
+        ellipse 64% 52% at 50% 46%,
+        color-mix(in oklab, var(--color-latar-panel) 92%, transparent) 0%,
+        transparent 74%
+      );
+    }
+  `,
   template: `
     <header class="border-b border-garis-halus pb-8">
       <div class="grid gap-8 lg:grid-cols-12 lg:items-end">
@@ -138,14 +152,31 @@ const KODE_KELAS = [
           <span class="text-teks-kuat-sekunder">Pengurus</span>
         </h2>
       </div>
-      <p class="max-w-[48ch] text-sm text-teks-sekunder lg:col-span-9">
-        Situs ini dikelola pengurus kelas. Nama dan kontak pribadi tidak dipublikasikan di sini;
-        informasi yang dibutuhkan disampaikan langsung oleh pengurus.
+      <p class="max-w-[52ch] text-sm text-teks-sekunder lg:col-span-9">
+        Dikelola pengurus kelas. Kontak pribadi tidak dipublikasikan.
       </p>
+    </section>
+
+    <section aria-labelledby="pembuat-judul" class="mt-12">
+      <h2 id="pembuat-judul" class="teks-piksel mb-8 text-sinyal">Meja kerja</h2>
+
+      <div class="grid gap-8 lg:grid-cols-12 lg:items-center">
+        <div class="lg:col-span-5">
+          <div class="bingkai-meja">
+            <kelas-meja-kerja class="block aspect-square w-full" />
+          </div>
+          <p class="teks-meta mt-3 text-teks-sekunder">Geser untuk memutar</p>
+        </div>
+
+        <div class="lg:col-span-7">
+          <kelas-kartu-pembuat [orang]="pembuat" />
+        </div>
+      </div>
     </section>
   `,
 })
 export class Tentang {
   protected readonly jalur = JALUR;
   protected readonly kodeKelas = KODE_KELAS;
+  protected readonly pembuat = PEMBUAT;
 }

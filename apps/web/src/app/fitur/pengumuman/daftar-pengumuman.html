@@ -88,35 +88,84 @@
       [labelTautan]="labelKosong()"
     />
   } @else {
-    <ol class="mt-8 border-t border-garis-halus">
-      @for (item of halaman.items; track item.slug) {
-        <li class="border-b border-garis-halus">
-          <a
-            [routerLink]="['/pengumuman', item.slug]"
-            class="group grid grid-cols-[4rem_minmax(0,1fr)] items-start gap-4 py-6 sm:gap-6"
-          >
-            <kelas-stempel-tanggal [nilai]="item.publishedAt" [tahun]="true" />
+    @for (utama of kepala(); track utama.slug) {
+      <a
+        [routerLink]="['/pengumuman', utama.slug]"
+        kelasMuncul
+        class="group mt-8 grid gap-x-8 gap-y-5 border-b border-garis-halus bg-latar-sekunder/40 pb-8 sm:grid-cols-[8rem_minmax(0,1fr)]"
+      >
+        <div class="flex items-start gap-4 sm:flex-col sm:gap-3 sm:pt-8 sm:pl-5">
+          <span aria-hidden="true" class="text-sinyal">
+            <kelas-angka-piksel teks="01" [tinggi]="22" />
+          </span>
+          <kelas-stempel-tanggal [nilai]="utama.publishedAt" [tahun]="true" />
+        </div>
 
-            <div class="min-w-0">
-              <p class="teks-meta bertanda text-sinyal">{{ labelKategori(item.category) }}</p>
-              <h2
-                class="mt-1.5 font-serif text-lg leading-snug tracking-[-0.01em] underline-offset-4 group-hover:underline"
-              >
-                {{ item.title }}
-              </h2>
-              <p class="mt-1.5 line-clamp-2 max-w-[58ch] text-sm text-teks-sekunder">
-                {{ item.excerpt }}
-              </p>
-              @if (item.state === 'archived') {
-                <span class="teks-meta mt-2.5 inline-block border border-garis-tegas px-2 py-0.5">
-                  Arsip
-                </span>
-              }
-            </div>
-          </a>
-        </li>
-      }
-    </ol>
+        <div class="min-w-0 sm:py-8 sm:pr-8">
+          <p class="teks-meta bertanda text-sinyal">{{ labelKategori(utama.category) }}</p>
+
+          <h2
+            class="mt-3 max-w-[26ch] font-serif text-[1.75rem] leading-[1.06] tracking-[-0.03em] underline-offset-[7px] group-hover:underline sm:text-[2.25rem]"
+          >
+            {{ utama.title }}
+          </h2>
+
+          <p class="mt-4 max-w-[62ch] text-sm leading-relaxed text-teks-kuat-sekunder">
+            {{ utama.excerpt }}
+          </p>
+
+          <span
+            class="teks-meta mt-5 inline-flex items-center gap-2 text-teks-kuat-sekunder transition-colors duration-150 ease-keluar group-hover:text-sinyal"
+          >
+            Baca
+            <span
+              aria-hidden="true"
+              class="transition-transform duration-200 ease-keluar group-hover:translate-x-1 motion-reduce:transform-none"
+              >&rarr;</span
+            >
+          </span>
+        </div>
+      </a>
+    }
+
+    @if (sisanya().length > 0) {
+      <ol class="mt-2 border-t border-garis-halus">
+        @for (item of sisanya(); track item.slug; let i = $index) {
+          <li class="border-b border-garis-halus" [kelasMuncul]="i * 40">
+            <a
+              [routerLink]="['/pengumuman', item.slug]"
+              class="group grid grid-cols-[2.25rem_3.25rem_minmax(0,1fr)] items-start gap-x-4 gap-y-2 py-5 sm:grid-cols-[3rem_4rem_minmax(0,1fr)] sm:gap-x-6"
+            >
+              <span aria-hidden="true" class="pt-1 text-garis-tegas transition-colors duration-150 ease-keluar group-hover:text-sinyal">
+                <kelas-angka-piksel [teks]="nomorUrut(i + 2)" [tinggi]="11" />
+              </span>
+
+              <kelas-stempel-tanggal [nilai]="item.publishedAt" />
+
+              <div class="col-span-2 min-w-0 sm:col-span-1">
+                <p class="teks-meta text-teks-sekunder">{{ labelKategori(item.category) }}</p>
+
+                <h3
+                  class="mt-1 font-serif text-lg leading-snug tracking-[-0.015em] underline-offset-4 group-hover:underline"
+                >
+                  {{ item.title }}
+                </h3>
+
+                <p class="mt-1.5 line-clamp-2 max-w-[58ch] text-sm text-teks-sekunder">
+                  {{ item.excerpt }}
+                </p>
+
+                @if (item.state === 'archived') {
+                  <span class="teks-meta mt-2.5 inline-block border border-garis-tegas px-2 py-0.5">
+                    Arsip
+                  </span>
+                }
+              </div>
+            </a>
+          </li>
+        }
+      </ol>
+    }
 
     @if (halaman.meta.totalPages > 1) {
       <nav aria-label="Navigasi halaman" class="mt-8 flex items-center justify-between gap-4">

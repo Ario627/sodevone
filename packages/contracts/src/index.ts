@@ -6,3 +6,4 @@ export * from './event.js';
 export * from './gallery.js';
 export * from './home.js';
 export * from './query.js';
+export * from './social.js';

@@ -71,6 +71,20 @@ export class AlbumImageRepository {
     await exec.insert(galleryImage).values(values);
   }
 
+  async applyOrder(exec: Executor, albumId: string, ids: string[]): Promise<void> {
+    const values = sql.join(
+      ids.map((id, index) => sql`(${id}::uuid, ${index}::integer)`),
+      sql`, `,
+    );
+
+    await exec.execute(sql`
+      update ${galleryImage}
+      set sort_order = urutan.posisi
+      from (values ${values}) as urutan(id, posisi)
+      where ${galleryImage.id} = urutan.id and ${galleryImage.albumId} = ${albumId}
+    `);
+  }
+
   async updateAltText(
     exec: Executor,
     albumId: string,

@@ -39,6 +39,11 @@ export const routes: Routes = [
     title: 'Galeri — XI PPLG 1',
   },
   {
+    path: 'kelas',
+    loadComponent: () => import('./fitur/kelas/kelas').then((m) => m.Kelas),
+    title: 'Kelas — XI PPLG 1',
+  },
+  {
     path: 'masuk',
     loadComponent: () => import('./fitur/masuk/masuk').then((m) => m.Masuk),
     title: 'Masuk — XI PPLG 1',

@@ -29,8 +29,6 @@ export class MediaController {
 
     response.setHeader('Cache-Control', MEDIA_CACHE);
     response.setHeader('X-Content-Type-Options', 'nosniff');
-    response.setHeader('Content-Type', image.mimeType);
-    response.setHeader('Content-Disposition', 'inline');
     response.setHeader('ETag', image.etag);
 
     const ifNoneMatch = response.req.headers['if-none-match'];
@@ -41,6 +39,14 @@ export class MediaController {
       return;
     }
 
+    if (image.kind === 'remote') {
+      response.redirect(302, image.location);
+
+      return;
+    }
+
+    response.setHeader('Content-Type', image.mimeType);
+    response.setHeader('Content-Disposition', 'inline');
     response.setHeader('Content-Length', String(image.byteSize));
     image.stream.on('error', () => response.destroy());
     image.stream.pipe(response);

@@ -11,7 +11,7 @@ import { Router, RouterLink } from '@angular/router';
 import type { AnnouncementListQuery } from '@kelas/contracts';
 import { toApiFailure } from '../../inti/api/dasar';
 import { bacaHalaman, permintaanDaftar } from '../../inti/api/pengumuman.api';
-import { KATEGORI_URUT, labelKategori } from '../../inti/format/label';
+import { KATEGORI_URUT, labelKategori, nomorUrut } from '../../inti/format/label';
 import {
   adaFilter,
   daftarQueryDari,
@@ -22,11 +22,13 @@ import {
 import { GalatMuat } from '../../komponen/galat-muat/galat-muat';
 import { Kosong } from '../../komponen/kosong/kosong';
 import { Memuat } from '../../komponen/memuat/memuat';
+import { AngkaPiksel } from '../../komponen/angka-piksel/angka-piksel';
 import { StempelTanggal } from '../../komponen/stempel-tanggal/stempel-tanggal';
+import { Muncul } from '../../inti/gerak/muncul';
 
 @Component({
   selector: 'kelas-daftar-pengumuman',
-  imports: [RouterLink, Memuat, Kosong, GalatMuat, StempelTanggal],
+  imports: [RouterLink, Memuat, Kosong, GalatMuat, StempelTanggal, AngkaPiksel, Muncul],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './daftar-pengumuman.html',
 })
@@ -67,6 +69,11 @@ export class DaftarPengumuman {
 
   protected readonly kategoriTersedia = KATEGORI_URUT;
   protected readonly labelKategori = labelKategori;
+  protected readonly nomorUrut = nomorUrut;
+
+  protected readonly kepala = computed(() => this.data()?.items.slice(0, 1) ?? []);
+
+  protected readonly sisanya = computed(() => this.data()?.items.slice(1) ?? []);
 
   private readonly meta = computed(() => this.data()?.meta);
 

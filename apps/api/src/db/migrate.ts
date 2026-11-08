@@ -9,6 +9,14 @@ const MIGRATION_FILE = /^\d{4}_[a-z0-9_]+\.sql$/;
 
 const MIGRATION_PREFIX = /^(\d{4})_/;
 
+function loadEnvFile(): void {
+  try {
+    process.loadEnvFile();
+  } catch {
+    return;
+  }
+}
+
 const ADVISORY_LOCK_KEY = 8_412_119;
 
 const LEDGER_TABLE = 'migration_ledger';
@@ -87,6 +95,8 @@ async function applyMigration(sql: postgres.Sql, migration: MigrationFile): Prom
 }
 
 async function run(): Promise<void> {
+  loadEnvFile();
+
   const url = process.env['DATABASE_URL'];
 
   if (url === undefined || url.length === 0) {
