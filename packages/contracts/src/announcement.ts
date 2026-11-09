@@ -6,6 +6,7 @@ import {
   UuidSchema,
   paginatedSchema,
 } from './common.js';
+import { MAX_IMAGE_DIMENSION } from './gallery.js';
 import {
   BooleanQuerySchema,
   PageParamSchema,
@@ -13,6 +14,18 @@ import {
   PerPagePublicSchema,
   SearchQuerySchema,
 } from './query.js';
+
+export const ANNOUNCEMENT_PIN_MAX = 3;
+
+export const ANNOUNCEMENT_ATTACHMENT_MAX = 8;
+
+export const MAX_ATTACHMENTS_PER_REQUEST = 5;
+
+export const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+
+export const ATTACHMENT_KINDS = ['image', 'file'] as const;
+
+export const ATTACHMENT_FILE_MIME_TYPES = ['application/pdf'] as const;
 
 export const AnnouncementCategorySchema = z.enum(['akademik', 'kegiatan', 'administrasi', 'umum']);
 
@@ -34,14 +47,55 @@ export const AnnouncementSummarySchema = z.object({
   excerpt: AnnouncementExcerptSchema,
   category: AnnouncementCategorySchema,
   state: PublishedStateSchema,
+  isPinned: z.boolean(),
   publishedAt: IsoDateTimeSchema,
 });
 
 export type AnnouncementSummary = z.infer<typeof AnnouncementSummarySchema>;
 
+export const AttachmentKindSchema = z.enum(ATTACHMENT_KINDS);
+
+export type AttachmentKind = z.infer<typeof AttachmentKindSchema>;
+
+export const AttachmentFileNameSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(160)
+  .refine(
+    (value) => [...value].every((character) => character >= ' ' && character !== '\u007f'),
+    'Nama berkas tidak valid',
+  );
+
+export const AttachmentMimeSchema = z.string().trim().min(3).max(120);
+
+export const AnnouncementAttachmentSchema = z.object({
+  id: UuidSchema,
+  kind: AttachmentKindSchema,
+  fileName: AttachmentFileNameSchema,
+  mimeType: AttachmentMimeSchema,
+  byteSize: z.number().int().positive().max(MAX_ATTACHMENT_BYTES),
+  width: z.number().int().positive().max(MAX_IMAGE_DIMENSION).nullable(),
+  height: z.number().int().positive().max(MAX_IMAGE_DIMENSION).nullable(),
+  sortOrder: z.number().int().min(0),
+});
+
+export type AnnouncementAttachment = z.infer<typeof AnnouncementAttachmentSchema>;
+
+export const AnnouncementAttachmentOrderSchema = z.strictObject({
+  ids: z.array(UuidSchema).min(1).max(ANNOUNCEMENT_ATTACHMENT_MAX),
+});
+
+export type AnnouncementAttachmentOrder = z.infer<typeof AnnouncementAttachmentOrderSchema>;
+
+export const AnnouncementPinSchema = z.strictObject({ pinned: z.boolean() });
+
+export type AnnouncementPin = z.infer<typeof AnnouncementPinSchema>;
+
 export const AnnouncementDetailSchema = AnnouncementSummarySchema.extend({
   bodyHtml: z.string().min(1),
   authorName: z.string().min(1).max(120).nullable(),
+  attachments: z.array(AnnouncementAttachmentSchema).max(ANNOUNCEMENT_ATTACHMENT_MAX),
   updatedAt: IsoDateTimeSchema,
 });
 
@@ -69,6 +123,7 @@ export const AnnouncementAdminSchema = z.object({
   body: AnnouncementBodySchema,
   category: AnnouncementCategorySchema,
   status: AnnouncementStatusSchema,
+  isPinned: z.boolean(),
   authorId: UuidSchema,
   authorName: z.string().min(1).max(120),
   version: z.number().int().min(1),
@@ -81,6 +136,7 @@ export type AnnouncementAdmin = z.infer<typeof AnnouncementAdminSchema>;
 
 export const AnnouncementAdminDetailSchema = AnnouncementAdminSchema.extend({
   bodyHtml: z.string().min(1),
+  attachments: z.array(AnnouncementAttachmentSchema).max(ANNOUNCEMENT_ATTACHMENT_MAX),
 });
 
 export type AnnouncementAdminDetail = z.infer<typeof AnnouncementAdminDetailSchema>;

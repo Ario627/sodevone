@@ -158,7 +158,7 @@ describe('SocialService.collection', () => {
 
     const hasil = await service.collection({ limit: 8 });
 
-    expect(hasil.etag).toBe('"2026-10-29T02:00:00.000Z-1"');
+    expect(hasil.etag).toBe('"2026-10-29T02-00-00-000Z-1"');
   });
 
   it('memakai penanda kosong saat belum ada tautan', async () => {

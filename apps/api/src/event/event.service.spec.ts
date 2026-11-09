@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { EventImageRepository } from './event-image.repository.js';
 import { EventRepository } from './event.repository.js';
 import type { EventPublicRow } from './event.repository.js';
 import { EventService } from './event.service.js';
@@ -21,8 +22,14 @@ function rowOf(overrides: Partial<EventPublicRow> = {}): EventPublicRow {
   };
 }
 
-function buatService(repository: Partial<EventRepository>) {
-  return new EventService(repository as EventRepository);
+function buatService(
+  repository: Partial<EventRepository>,
+  images: Partial<EventImageRepository> = {},
+) {
+  return new EventService(
+    repository as EventRepository,
+    { findPhotos: vi.fn().mockResolvedValue([]), ...images } as unknown as EventImageRepository,
+  );
 }
 
 describe('EventService.collection', () => {
@@ -83,6 +90,7 @@ describe('EventService.detail', () => {
         location: 'Ruang XI PPLG 1',
         state: 'published',
         description: 'Membersihkan ruang kelas bersama.',
+        photos: [],
       },
     });
   });

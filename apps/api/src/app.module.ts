@@ -9,12 +9,15 @@ import { AuditAdminModule } from './audit/audit-admin.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { ApiThrottlerGuard } from './common/guards/api-throttler.guard.js';
 import { OriginGuard } from './common/guards/origin.guard.js';
+import { ContributorModule } from './contributor/contributor.module.js';
 import { DatabaseModule } from './db/database.module.js';
 import { EventModule } from './event/event.module.js';
 import { GalleryModule } from './gallery/gallery.module.js';
 import { HealthModule } from './health/health.module.js';
 import { HomeModule } from './home/home.module.js';
 import { MediaModule } from './media/media.module.js';
+import { MemberModule } from './member/member.module.js';
+import { SettingModule } from './setting/setting.module.js';
 import { SocialModule } from './social/social.module.js';
 import type { Env } from './config/env.js';
 import { parseEnv } from './config/env.js';
@@ -63,6 +66,9 @@ import { parseEnv } from './config/env.js';
     GalleryModule,
     MediaModule,
     SocialModule,
+    MemberModule,
+    ContributorModule,
+    SettingModule,
     HomeModule,
     HealthModule,
     AuthModule,

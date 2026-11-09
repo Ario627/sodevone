@@ -9,8 +9,11 @@ import type {
 } from '@kelas/contracts';
 import { toIsoInstant } from '../common/text/instant.js';
 import { renderAnnouncementBody } from '../common/text/markdown.js';
+import { AnnouncementAttachmentRepository } from './announcement-attachment.repository.js';
+import { toAttachments } from './announcement-attachment.mapper.js';
 import { AnnouncementRepository } from './announcement.repository.js';
 import type { AnnouncementPublicRow } from './announcement.repository.js';
+import { DatabaseService } from '../db/database.service.js';
 
 export type AnnouncementPage = { items: AnnouncementSummary[]; meta: PaginationMeta };
 
@@ -38,15 +41,20 @@ function toSummary(row: AnnouncementPublicRow): AnnouncementSummary {
     excerpt: row.excerpt,
     category: row.category as AnnouncementCategory,
     state: publicStateOf(row.status),
+    isPinned: row.isPinned,
     publishedAt: publishedAtOf(row),
   };
 }
 
-function toDetail(row: AnnouncementPublicRow): AnnouncementDetail {
+function toDetail(
+  row: AnnouncementPublicRow,
+  attachments: AnnouncementDetail['attachments'],
+): AnnouncementDetail {
   return {
     ...toSummary(row),
     bodyHtml: renderAnnouncementBody(row.body),
     authorName: null,
+    attachments,
     updatedAt: toIsoInstant(row.updatedAt),
   };
 }
@@ -57,7 +65,15 @@ function metaOf(page: number, perPage: number, total: number): PaginationMeta {
 
 @Injectable()
 export class AnnouncementService {
-  constructor(private readonly repository: AnnouncementRepository) {}
+  constructor(
+    private readonly repository: AnnouncementRepository,
+    private readonly attachments: AnnouncementAttachmentRepository,
+    private readonly database: DatabaseService,
+  ) {}
+
+  private async detailOf(row: AnnouncementPublicRow): Promise<AnnouncementDetail> {
+    return toDetail(row, toAttachments(await this.attachments.findMany(this.database.db, row.id)));
+  }
 
   async list(query: AnnouncementListQuery): Promise<AnnouncementPage> {
     const { rows, total } = await this.repository.findPage({
@@ -75,7 +91,7 @@ export class AnnouncementService {
     const row = await this.repository.findVisibleBySlug(slug);
 
     if (row !== undefined) {
-      return { kind: 'found', detail: toDetail(row) };
+      return { kind: 'found', detail: await this.detailOf(row) };
     }
 
     const redirectId = await this.repository.findRedirectTargetId(slug);
@@ -86,8 +102,10 @@ export class AnnouncementService {
 
     const moved = await this.repository.findVisibleById(redirectId);
 
-    return moved === undefined
-      ? { kind: 'missing' }
-      : { kind: 'moved', slug: moved.slug, detail: toDetail(moved) };
+    if (moved === undefined) {
+      return { kind: 'missing' };
+    }
+
+    return { kind: 'moved', slug: moved.slug, detail: await this.detailOf(moved) };
   }
 }

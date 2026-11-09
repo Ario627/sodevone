@@ -8,25 +8,33 @@ import {
   viewChild,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import type { AlbumListQuery } from '@kelas/contracts';
 import { bacaBeranda, permintaanBeranda } from '../../inti/api/beranda.api';
+import {
+  TOKEN_WARNA,
+  bacaPengaturan,
+  papanDari,
+  permintaanPengaturan,
+} from '../../inti/api/pengaturan.api';
 import { bacaKoleksiSosial, permintaanSosial } from '../../inti/api/sosial.api';
 import { toApiFailure } from '../../inti/api/dasar';
-import { srcsetSampul, sumberSampul } from '../../inti/api/galeri.api';
-import { labelKategori, nomorUrut } from '../../inti/format/label';
+import { bacaHalamanAlbum, permintaanDaftarAlbum, srcsetSampul, sumberSampul } from '../../inti/api/galeri.api';
+import { labelKategori } from '../../inti/format/label';
 import { rentangJam, tanggalJamTeks, tanggalTeks } from '../../inti/format/tanggal';
-import { AngkaPiksel } from '../../komponen/angka-piksel/angka-piksel';
 import { ArenaKertas } from '../../komponen/arena-kertas/arena-kertas';
 import { SosialMosaik } from '../../komponen/sosial-mosaik/sosial-mosaik';
 import { GalatMuat } from '../../komponen/galat-muat/galat-muat';
 import { KepalaBagian } from '../../komponen/kepala-bagian/kepala-bagian';
 import { Memuat } from '../../komponen/memuat/memuat';
 import { PapanStatus } from '../../komponen/papan-status/papan-status';
+import { RolFilm } from '../../komponen/rol-film/rol-film';
 import { StempelTanggal } from '../../komponen/stempel-tanggal/stempel-tanggal';
 import { TeksDekode } from '../../komponen/teks-dekode/teks-dekode';
 import { VoxelMonogram } from '../../komponen/voxel-monogram/voxel-monogram';
 import { Muncul } from '../../inti/gerak/muncul';
 import { Catatan } from '../../inti/gerak/catatan';
 import { bolehBergerak } from '../../inti/gerak/media';
+import { TINGGI_GLYPH, lebarTeks } from '../../inti/piksel/glyph';
 import { geserTerbatas, normalisasi } from '../../inti/gerak/paralaks';
 
 const KODE_KELAS = [
@@ -39,7 +47,6 @@ const KODE_KELAS = [
   selector: 'kelas-beranda',
   imports: [
     RouterLink,
-    AngkaPiksel,
     Memuat,
     GalatMuat,
     KepalaBagian,
@@ -50,6 +57,7 @@ const KODE_KELAS = [
     ArenaKertas,
     Muncul,
     PapanStatus,
+    RolFilm,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './beranda.html',
@@ -61,6 +69,15 @@ export class Beranda {
     parse: bacaKoleksiSosial,
   });
 
+  private readonly sumberPengaturan = httpResource(permintaanPengaturan, {
+    parse: bacaPengaturan,
+  });
+
+  private readonly sumberAlbum = httpResource(
+    () => permintaanDaftarAlbum({ page: 1, perPage: 6 } as AlbumListQuery),
+    { parse: bacaHalamanAlbum },
+  );
+
   private readonly catatan = inject(Catatan);
 
 
@@ -69,6 +86,36 @@ export class Beranda {
   private readonly bisaBergerak = bolehBergerak();
 
   protected readonly judul = 'XI PPLG 1';
+
+  private readonly papan = computed(() => {
+    const sumber = this.sumberPengaturan;
+
+    return papanDari(sumber.hasValue() ? sumber.value() : undefined);
+  });
+
+  protected readonly teksPapan = computed(() => {
+    const papan = this.papan();
+
+    return papan.kind === 'teks' ? papan.teks : '';
+  });
+
+  protected readonly matriksPapan = computed<readonly string[]>(() => {
+    const papan = this.papan();
+
+    return papan.kind === 'matriks' ? papan.baris : [];
+  });
+
+  protected readonly warnaPapan = computed(() => TOKEN_WARNA[this.papan().warna]);
+
+  protected readonly ukuranPapan = computed(() => {
+    const baris = this.matriksPapan();
+
+    if (baris.length > 0) {
+      return `${baris[0]?.length ?? 0} × ${baris.length}`;
+    }
+
+    return `${lebarTeks(this.teksPapan())} × ${TINGGI_GLYPH}`;
+  });
 
   protected readonly kodeKelas = KODE_KELAS;
 
@@ -79,6 +126,17 @@ export class Beranda {
     const sumber = this.sumberSosial;
 
     return sumber.hasValue() ? sumber.value().items : [];
+  });
+
+  protected readonly albumRol = computed(() => {
+    const dariHalaman = this.sumberAlbum;
+    const dariBeranda = this.data()?.albums ?? [];
+
+    if (dariHalaman.hasValue() && dariHalaman.value().items.length > 0) {
+      return dariHalaman.value().items;
+    }
+
+    return dariBeranda;
   });
 
   protected readonly sedangMemuat = this.sumber.isLoading;
@@ -100,7 +158,6 @@ export class Beranda {
   protected readonly lainnya = computed(() => this.data()?.announcements.slice(1) ?? []);
 
   protected readonly labelKategori = labelKategori;
-  protected readonly nomorUrut = nomorUrut;
 
   protected readonly tanggalJamTeks = tanggalJamTeks;
   protected readonly tanggalTeks = tanggalTeks;

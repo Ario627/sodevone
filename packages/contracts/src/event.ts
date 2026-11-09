@@ -6,7 +6,10 @@ import {
   UuidSchema,
   paginatedSchema,
 } from './common.js';
+import { MAX_IMAGE_DIMENSION } from './gallery.js';
 import { PageParamSchema, PerPageAdminSchema } from './query.js';
+
+export const EVENT_PHOTO_MAX = 12;
 
 export const EventStatusSchema = z.enum(['draft', 'published', 'archived']);
 
@@ -29,8 +32,25 @@ export const EventSummarySchema = z.object({
 
 export type EventSummary = z.infer<typeof EventSummarySchema>;
 
+export const EventPhotoSchema = z.object({
+  id: UuidSchema,
+  width: z.number().int().positive().max(MAX_IMAGE_DIMENSION),
+  height: z.number().int().positive().max(MAX_IMAGE_DIMENSION),
+  altText: z.string().min(1).max(200).nullable(),
+  sortOrder: z.number().int().min(0),
+});
+
+export type EventPhoto = z.infer<typeof EventPhotoSchema>;
+
+export const EventImagesSchema = z.strictObject({
+  imageIds: z.array(UuidSchema).max(EVENT_PHOTO_MAX),
+});
+
+export type EventImages = z.infer<typeof EventImagesSchema>;
+
 export const EventDetailSchema = EventSummarySchema.extend({
   description: EventDescriptionSchema.nullable(),
+  photos: z.array(EventPhotoSchema).max(EVENT_PHOTO_MAX),
 });
 
 export type EventDetail = z.infer<typeof EventDetailSchema>;
@@ -51,6 +71,7 @@ export const EventAdminSchema = z.object({
   startsAt: IsoDateTimeSchema,
   endsAt: IsoDateTimeSchema.nullable(),
   status: EventStatusSchema,
+  photoCount: z.number().int().min(0),
   authorName: z.string().min(1).max(120),
   version: z.number().int().min(1),
   createdAt: IsoDateTimeSchema,
@@ -58,6 +79,12 @@ export const EventAdminSchema = z.object({
 });
 
 export type EventAdmin = z.infer<typeof EventAdminSchema>;
+
+export const EventAdminDetailSchema = EventAdminSchema.extend({
+  photos: z.array(EventPhotoSchema).max(EVENT_PHOTO_MAX),
+});
+
+export type EventAdminDetail = z.infer<typeof EventAdminDetailSchema>;
 
 export const EventAdminListSchema = EventAdminSchema.omit({ description: true });
 

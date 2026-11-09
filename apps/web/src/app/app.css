@@ -4,3 +4,7 @@
   min-height: 100dvh;
   isolation: isolate;
 }
+
+.kepala-situs {
+  view-transition-name: kepala-situs;
+}

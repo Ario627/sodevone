@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import {
+  boolean,
   check,
   index,
   pgTable,
@@ -23,6 +24,8 @@ export const announcement = pgTable(
     category: text('category').notNull().default('umum'),
     status: text('status').notNull().default('draft'),
     visibility: text('visibility').notNull().default('public'),
+    isPinned: boolean('is_pinned').notNull().default(false),
+    pinnedAt: timestamp('pinned_at', { withTimezone: true, mode: 'string' }),
     authorId: uuid('author_id')
       .notNull()
       .references(() => adminUser.id, { onDelete: 'restrict' }),
@@ -34,7 +37,7 @@ export const announcement = pgTable(
   (table) => [
     uniqueIndex('uq_announcements_slug').on(table.slug),
     index('idx_announcements_public')
-      .on(table.status, table.publishedAt.desc())
+      .on(table.isPinned.desc(), table.publishedAt.desc())
       .where(sql`status = 'published'`),
     index('idx_announcements_category_public')
       .on(table.category, table.publishedAt.desc())
@@ -55,6 +58,7 @@ export const announcement = pgTable(
       'ck_announcements_published_at_required',
       sql`status = 'draft' OR published_at IS NOT NULL`,
     ),
+    check('ck_announcements_pinned_at_required', sql`is_pinned = false OR pinned_at IS NOT NULL`),
   ],
 );
 

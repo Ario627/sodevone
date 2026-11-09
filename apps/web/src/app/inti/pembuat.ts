@@ -1,3 +1,5 @@
+import type { PembuatServer } from './api/pembuat.api';
+
 export interface Pembuat {
   readonly nama: string;
   readonly panggilan: string;
@@ -14,7 +16,7 @@ export const PEMBUAT: Pembuat = {
   peran: 'Perancang & pengembang situs',
   kelas: 'XI PPLG 1',
   ringkas:
-    'Situs ini dikerjakan sendiri dari nol: struktur halaman, sistem gerak, sampai ruang kelas tiga dimensi. Tidak memakai templat.',
+    'Situs ini dikerjakan sendiri dari nol: struktur halaman, sistem gerak, sampai ruang kelas tiga dimensi.',
   fokus: [
     {
       judul: 'Antarmuka',
@@ -31,3 +33,15 @@ export const PEMBUAT: Pembuat = {
   ],
   alat: ['Angular', 'TypeScript', 'Tailwind', 'Three.js', 'GSAP', 'NestJS', 'PostgreSQL'],
 };
+
+export function pembuatDariServer(nilai: PembuatServer): Pembuat {
+  return {
+    nama: nilai.name,
+    panggilan: nilai.nickname,
+    peran: nilai.role,
+    kelas: nilai.className,
+    ringkas: nilai.summary,
+    fokus: nilai.focuses.map((item) => ({ judul: item.title, isi: item.body })),
+    alat: nilai.tools,
+  };
+}

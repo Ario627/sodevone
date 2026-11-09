@@ -1,4 +1,9 @@
-import type { AnnouncementAdminDetail, AnnouncementAdminList, AnnouncementCategory } from '@kelas/contracts';
+import type {
+  AnnouncementAdminDetail,
+  AnnouncementAdminList,
+  AnnouncementAttachment,
+  AnnouncementCategory,
+} from '@kelas/contracts';
 import { toIsoInstant, toIsoInstantOrNull } from '../common/text/instant.js';
 import { renderAnnouncementBody } from '../common/text/markdown.js';
 import type {
@@ -14,6 +19,7 @@ function baseOf(row: AnnouncementAdminListRow): AnnouncementAdminList {
     excerpt: row.excerpt,
     category: row.category as AnnouncementCategory,
     status: row.status as AnnouncementAdminList['status'],
+    isPinned: row.isPinned,
     authorId: row.authorId,
     authorName: row.authorName,
     version: row.version,
@@ -27,10 +33,14 @@ export function toAdminList(row: AnnouncementAdminListRow): AnnouncementAdminLis
   return baseOf(row);
 }
 
-export function toAdminDetail(row: AnnouncementAdminDetailRow): AnnouncementAdminDetail {
+export function toAdminDetail(
+  row: AnnouncementAdminDetailRow,
+  attachments: AnnouncementAttachment[],
+): AnnouncementAdminDetail {
   return {
     ...baseOf(row),
     body: row.body,
     bodyHtml: renderAnnouncementBody(row.body),
+    attachments,
   };
 }

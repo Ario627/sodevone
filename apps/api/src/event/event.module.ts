@@ -4,6 +4,7 @@ import { AuthModule } from '../auth/auth.module.js';
 import { EventAdminController } from './event-admin.controller.js';
 import { EventAdminRepository } from './event-admin.repository.js';
 import { EventAdminService } from './event-admin.service.js';
+import { EventImageRepository } from './event-image.repository.js';
 import { EventPublicController } from './event.public.controller.js';
 import { EventRepository } from './event.repository.js';
 import { EventService } from './event.service.js';
@@ -11,7 +12,13 @@ import { EventService } from './event.service.js';
 @Module({
   imports: [AuditModule, AuthModule],
   controllers: [EventPublicController, EventAdminController],
-  providers: [EventRepository, EventService, EventAdminRepository, EventAdminService],
+  providers: [
+    EventRepository,
+    EventImageRepository,
+    EventService,
+    EventAdminRepository,
+    EventAdminService,
+  ],
   exports: [EventService],
 })
 export class EventModule {}

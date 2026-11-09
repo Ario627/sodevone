@@ -9,6 +9,8 @@ export const AuditActionSchema = z.enum([
   'archive',
   'restore',
   'unpublish',
+  'pin',
+  'unpin',
   'delete',
   'upload',
   'login_success',
@@ -29,6 +31,10 @@ export const AuditEntityTypeSchema = z.enum([
   'user',
   'session',
   'social',
+  'member',
+  'contributor',
+  'attachment',
+  'setting',
 ]);
 
 export type AuditEntityType = z.infer<typeof AuditEntityTypeSchema>;

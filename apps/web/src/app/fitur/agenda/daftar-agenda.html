@@ -23,6 +23,29 @@
     labelTautan="Lihat pengumuman"
   />
 } @else if (data(); as koleksi) {
+  @if (linimasa().length > 1) {
+    <section aria-labelledby="linimasa-judul" class="mt-10">
+      <div class="flex flex-wrap items-end justify-between gap-x-8 gap-y-2">
+        <div class="max-w-[40ch]">
+          <p class="teks-piksel text-sinyal">Linimasa</p>
+
+          <h2
+            id="linimasa-judul"
+            class="mt-3 font-serif text-2xl leading-tight tracking-[-0.03em] sm:text-3xl"
+          >
+            Perjalanan satu semester
+          </h2>
+        </div>
+
+        <p class="teks-meta max-w-[24ch] text-teks-sekunder">
+          Gulir untuk menyusuri jalurnya
+        </p>
+      </div>
+
+      <kelas-linimasa-semester class="mt-4 block" [kegiatan]="linimasa()" [album]="album()" />
+    </section>
+  }
+
   @if (koleksi.upcoming.length > 0) {
     <section aria-labelledby="mendatang-judul" class="mt-10">
       <kelas-kepala-bagian

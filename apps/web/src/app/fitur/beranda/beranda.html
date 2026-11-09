@@ -33,13 +33,18 @@
     <div class="lg:col-span-4">
       <figure class="mb-3 hidden lg:block">
         <div class="overflow-hidden border border-garis-halus bg-latar-sekunder">
-          <kelas-voxel-monogram class="block aspect-[16/11] w-full" teks="XI" />
+          <kelas-voxel-monogram
+            class="block aspect-[16/11] w-full"
+            [teks]="teksPapan()"
+            [matriks]="matriksPapan()"
+            [warna]="warnaPapan()"
+          />
         </div>
         <figcaption
           class="teks-piksel mt-1.5 flex items-baseline justify-between gap-3 text-teks-sekunder"
         >
           <span>Monogram kelas</span>
-          <span aria-hidden="true">5 &times; 7</span>
+          <span aria-hidden="true">{{ ukuranPapan() }}</span>
         </figcaption>
       </figure>
 
@@ -98,6 +103,10 @@
         class="group mt-4 grid gap-3 border-t border-garis-halus pt-5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-8"
       >
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 sm:flex-col sm:gap-1.5">
+          @if (utama.isPinned) {
+            <span class="teks-meta text-sinyal">Disematkan</span>
+          }
+
           <span class="teks-meta bertanda text-sinyal">{{ labelKategori(utama.category) }}</span>
           <time [attr.datetime]="utama.publishedAt" class="teks-meta whitespace-nowrap text-teks-sekunder">
             {{ tanggalJamTeks(utama.publishedAt) }}
@@ -122,6 +131,9 @@
                 class="group flex items-baseline gap-3 py-3.5"
               >
                 <span class="teks-meta hidden shrink-0 text-teks-sekunder sm:inline">
+                  @if (pengumuman.isPinned) {
+                    <span class="text-sinyal">Semat · </span>
+                  }
                   {{ labelKategori(pengumuman.category) }}
                 </span>
                 <span
@@ -191,39 +203,17 @@
     }
   </section>
 
-  @if (ringkasan.albums.length > 0) {
+  @if (albumRol().length > 0) {
     <section aria-labelledby="galeri-judul" class="pt-12">
       <kelas-kepala-bagian
         nomor="03"
         judul="Dokumentasi"
         judulId="galeri-judul"
-        [jumlah]="ringkasan.albums.length + ' album'"
+        [jumlah]="albumRol().length + ' album'"
         tautan="/galeri"
       />
 
-      <div class="mt-6">
-        <ul class="grid gap-0 border-t border-garis-halus">
-          @for (album of ringkasan.albums; track album.slug; let i = $index) {
-            <li class="border-b border-garis-halus" [kelasMuncul]="i * 45">
-              <a
-                [routerLink]="['/galeri', album.slug]"
-                class="group flex items-baseline gap-3 py-3.5"
-              >
-                <span aria-hidden="true" class="text-garis-tegas">
-                  <kelas-angka-piksel [teks]="nomorUrut(i + 1)" [tinggi]="10" />
-                </span>
-                <span
-                  class="min-w-0 truncate font-serif text-base tracking-[-0.01em] underline-offset-4 group-hover:underline"
-                >
-                  {{ album.title }}
-                </span>
-                <span aria-hidden="true" class="pengarah-titik hidden sm:block"></span>
-                <span class="teks-meta shrink-0 text-teks-sekunder">{{ album.imageCount }} foto</span>
-              </a>
-            </li>
-          }
-        </ul>
-      </div>
+      <kelas-rol-film class="mt-6 block" [album]="albumRol()" />
     </section>
   }
 

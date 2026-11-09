@@ -5,6 +5,10 @@ import { Sesi } from '../../inti/sesi/sesi';
 const MENU = [
   { label: 'Ringkasan', jalur: '/admin/ringkasan', tepat: true },
   { label: 'Pengumuman', jalur: '/admin/pengumuman', tepat: false },
+  { label: 'Agenda', jalur: '/admin/agenda', tepat: false },
+  { label: 'Galeri', jalur: '/admin/galeri', tepat: false },
+  { label: 'Anggota', jalur: '/admin/anggota', tepat: false },
+  { label: 'Papan', jalur: '/admin/papan', tepat: false },
 ] as const;
 
 @Component({

@@ -15,6 +15,7 @@ import {
   SlugSchema,
   UuidSchema,
   type AnnouncementAdminDetail,
+  type AnnouncementAttachment,
   type AnnouncementCategory,
   type AnnouncementStatus,
 } from '@kelas/contracts';
@@ -22,10 +23,17 @@ import { firstValueFrom } from 'rxjs';
 import {
   alamatArsip,
   alamatBuat,
+  alamatLampiran,
+  alamatLampiranSatu,
   alamatPengumuman,
+  alamatPratinjauLampiran,
+  alamatSemat,
   alamatTerbit,
   bacaDetailAdmin,
+  bacaLampiran,
+  berkasLampiran,
   permintaanDetailAdmin,
+  ukuranBerkas,
 } from '../../../inti/api/admin-pengumuman.api';
 import { toApiFailure } from '../../../inti/api/dasar';
 import { KATEGORI_URUT, labelKategori } from '../../../inti/format/label';
@@ -95,6 +103,20 @@ export class EditorPengumuman {
     () => this.detail()?.status,
   );
 
+  protected readonly semat = computed(() => this.detail()?.isPinned ?? false);
+
+  protected readonly lampiran = computed<readonly AnnouncementAttachment[]>(
+    () => this.detail()?.attachments ?? [],
+  );
+
+  protected readonly sedangSemat = signal(false);
+
+  protected readonly sedangUnggah = signal(false);
+
+  protected readonly sedangHapusLampiran = signal<string | undefined>(undefined);
+
+  protected readonly ukuranBerkas = ukuranBerkas;
+
   protected readonly versi = computed(() => this.detail()?.version);
 
   protected readonly sedangSimpan = signal(false);
@@ -159,6 +181,30 @@ export class EditorPengumuman {
   protected simpan(peristiwa: Event): void {
     peristiwa.preventDefault();
     void this.prosesSimpan();
+  }
+
+  protected gambarLampiran(): readonly AnnouncementAttachment[] {
+    return this.lampiran().filter((item) => item.kind === 'image');
+  }
+
+  protected berkasLampiran(): readonly AnnouncementAttachment[] {
+    return this.lampiran().filter((item) => item.kind === 'file');
+  }
+
+  protected pratinjauLampiran(lampiranId: string): string {
+    return alamatPratinjauLampiran(this.id() as string, lampiranId, 'kecil');
+  }
+
+  protected ubahSemat(): void {
+    void this.prosesSemat();
+  }
+
+  protected unggahLampiran(peristiwa: Event): void {
+    void this.prosesUnggah(peristiwa);
+  }
+
+  protected hapusLampiran(lampiranId: string): void {
+    void this.prosesHapusLampiran(lampiranId);
   }
 
   protected terbitkan(): void {
@@ -234,6 +280,88 @@ export class EditorPengumuman {
       this.galat.set(toApiFailure(galat).message);
     } finally {
       this.sedangSimpan.set(false);
+    }
+  }
+
+  private async prosesSemat(): Promise<void> {
+    const id = this.id();
+    const detail = this.detail();
+
+    if (id === undefined || detail === undefined || this.sedangSemat()) {
+      return;
+    }
+
+    this.sedangSemat.set(true);
+    this.galat.set(undefined);
+    this.pesan.set(undefined);
+
+    try {
+      await firstValueFrom(
+        this.http.patch(
+          alamatSemat(id),
+          { pinned: !detail.isPinned },
+          { headers: { 'If-Match': `"${detail.version}"` } },
+        ),
+      );
+
+      this.pesan.set(detail.isPinned ? 'Sematan dilepas.' : 'Pengumuman disematkan.');
+      this.sumber.reload();
+    } catch (galat) {
+      this.galat.set(toApiFailure(galat).message);
+    } finally {
+      this.sedangSemat.set(false);
+    }
+  }
+
+  private async prosesUnggah(peristiwa: Event): Promise<void> {
+    const id = this.id();
+    const masukan = peristiwa.target as HTMLInputElement;
+    const berkas = Array.from(masukan.files ?? []);
+
+    masukan.value = '';
+
+    if (id === undefined || berkas.length === 0 || this.sedangUnggah()) {
+      return;
+    }
+
+    this.sedangUnggah.set(true);
+    this.galat.set(undefined);
+    this.pesan.set(undefined);
+
+    try {
+      bacaLampiran(
+        await firstValueFrom(this.http.post(alamatLampiran(id), berkasLampiran(berkas))),
+      );
+
+      this.pesan.set(`${berkas.length} lampiran tersimpan.`);
+      this.sumber.reload();
+    } catch (galat) {
+      this.galat.set(toApiFailure(galat).message);
+    } finally {
+      this.sedangUnggah.set(false);
+    }
+  }
+
+  private async prosesHapusLampiran(lampiranId: string): Promise<void> {
+    const id = this.id();
+
+    if (id === undefined || this.sedangHapusLampiran() !== undefined) {
+      return;
+    }
+
+    this.sedangHapusLampiran.set(lampiranId);
+    this.galat.set(undefined);
+    this.pesan.set(undefined);
+
+    try {
+      await firstValueFrom(this.http.delete(alamatLampiranSatu(id, lampiranId)));
+
+      this.pesan.set('Lampiran dihapus.');
+      this.sumber.reload();
+    } catch (galat) {
+      this.galat.set(toApiFailure(galat).message);
+    } finally {
+      this.sedangHapusLampiran.set(undefined);
     }
   }
 

@@ -12,6 +12,7 @@ import { RouterLink } from '@angular/router';
 import { SlugSchema } from '@kelas/contracts';
 import { toApiFailure } from '../../inti/api/dasar';
 import { bacaKegiatan, permintaanKegiatan } from '../../inti/api/agenda.api';
+import { sumberFoto } from '../../inti/api/galeri.api';
 import { rentangJam, tanggalPanjangTeks, tanggalTeks } from '../../inti/format/tanggal';
 import { GalatMuat } from '../../komponen/galat-muat/galat-muat';
 import { Memuat } from '../../komponen/memuat/memuat';
@@ -84,6 +85,31 @@ import { Memuat } from '../../komponen/memuat/memuat';
           </p>
         </header>
 
+        @if (kegiatan.photos.length > 0) {
+          <section aria-labelledby="foto-kegiatan" class="mt-8">
+            <h2 id="foto-kegiatan" class="teks-meta text-teks-sekunder">
+              Foto kegiatan ({{ kegiatan.photos.length }})
+            </h2>
+
+            <ul class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+              @for (foto of kegiatan.photos; track foto.id) {
+                <li class="overflow-hidden border border-garis-halus">
+                  <img
+                    [src]="sumberFoto(foto.id, 'kecil')"
+                    [attr.width]="foto.width"
+                    [attr.height]="foto.height"
+                    [attr.alt]="foto.altText ?? kegiatan.title"
+                    loading="lazy"
+                    decoding="async"
+                    class="block w-full bg-latar-sekunder object-cover"
+                    style="aspect-ratio: 4 / 3"
+                  />
+                </li>
+              }
+            </ul>
+          </section>
+        }
+
         @if (kegiatan.description; as keterangan) {
           <p class="prosa mt-8">{{ keterangan }}</p>
         } @else {
@@ -105,6 +131,8 @@ import { Memuat } from '../../komponen/memuat/memuat';
   `,
 })
 export class DetailAgenda {
+  protected readonly sumberFoto = sumberFoto;
+
   private readonly judulHalaman = inject(Title);
 
   readonly slug = input.required<string>();

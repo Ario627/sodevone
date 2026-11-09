@@ -25,10 +25,20 @@ import { Memuat } from '../../komponen/memuat/memuat';
 import { AngkaPiksel } from '../../komponen/angka-piksel/angka-piksel';
 import { StempelTanggal } from '../../komponen/stempel-tanggal/stempel-tanggal';
 import { Muncul } from '../../inti/gerak/muncul';
+import { PapanLayang } from '../../komponen/papan-layang/papan-layang';
 
 @Component({
   selector: 'kelas-daftar-pengumuman',
-  imports: [RouterLink, Memuat, Kosong, GalatMuat, StempelTanggal, AngkaPiksel, Muncul],
+  imports: [
+    RouterLink,
+    Memuat,
+    Kosong,
+    GalatMuat,
+    StempelTanggal,
+    AngkaPiksel,
+    Muncul,
+    PapanLayang,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './daftar-pengumuman.html',
 })
@@ -71,11 +81,17 @@ export class DaftarPengumuman {
   protected readonly labelKategori = labelKategori;
   protected readonly nomorUrut = nomorUrut;
 
+  protected readonly papan = computed(() => this.data()?.items.slice(0, 3) ?? []);
+
   protected readonly kepala = computed(() => this.data()?.items.slice(0, 1) ?? []);
 
   protected readonly sisanya = computed(() => this.data()?.items.slice(1) ?? []);
 
   private readonly meta = computed(() => this.data()?.meta);
+
+  protected bukaPapan(slug: string): void {
+    void this.router.navigate(['/pengumuman', slug]);
+  }
 
   private readonly totalTersedia = computed(() => this.meta()?.total ?? 0);
 

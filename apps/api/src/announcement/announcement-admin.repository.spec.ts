@@ -1,12 +1,11 @@
 import { randomBytes } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import type { DatabaseService } from '../db/database.service.js';
+import { migrationBodies } from '../db/migration-catalog.js';
 import * as schema from '../db/schema/index.js';
 import { adminUser } from '../db/schema/admin-user.js';
 import { announcement } from '../db/schema/announcement.js';
@@ -21,10 +20,6 @@ const AUTHOR_HASH = '$argon2id$v=19$m=19456,t=2,p=1$c2FsdA$aGFzaA';
 
 const SKEMA = `test_${randomBytes(6).toString('hex')}`;
 
-const MIGRATION_DIRECTORY = path.join(import.meta.dirname, '..', 'db', 'migrations');
-
-const MIGRATION_FILES = ['0000_init_schema.sql', '0001_audit_unpublish_action.sql'];
-
 type Klien = ReturnType<typeof postgres>;
 
 type Database = PostgresJsDatabase<typeof schema>;
@@ -34,10 +29,6 @@ let admin: Klien;
 let client: Klien;
 
 let root: Database;
-
-function tanpaKualifikasiSkema(sqlMigrasi: string): string {
-  return sqlMigrasi.replaceAll('"public".', '');
-}
 
 function repositoryOf(db: Database): AnnouncementAdminRepository {
   return new AnnouncementAdminRepository({ db } as unknown as DatabaseService);
@@ -57,10 +48,8 @@ async function dalamTransaksi(run: (db: Database) => Promise<void>): Promise<voi
 }
 
 async function jalankanMigrasi(): Promise<void> {
-  for (const name of MIGRATION_FILES) {
-    const body = await readFile(path.join(MIGRATION_DIRECTORY, name), 'utf8');
-
-    await client.unsafe(tanpaKualifikasiSkema(body)).simple();
+  for (const body of await migrationBodies()) {
+    await client.unsafe(body).simple();
   }
 }
 

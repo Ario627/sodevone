@@ -1,8 +1,10 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { KartuPembuat } from '../../komponen/kartu-pembuat/kartu-pembuat';
 import { MejaKerja } from '../../komponen/meja-kerja/meja-kerja';
-import { PEMBUAT } from '../../inti/pembuat';
+import { httpResource } from '@angular/common/http';
+import { bacaPembuat, permintaanPembuat } from '../../inti/api/pembuat.api';
+import { PEMBUAT, pembuatDariServer, type Pembuat } from '../../inti/pembuat';
 
 const JALUR = [
   {
@@ -169,7 +171,7 @@ const KODE_KELAS = [
         </div>
 
         <div class="lg:col-span-7">
-          <kelas-kartu-pembuat [orang]="pembuat" />
+          <kelas-kartu-pembuat [orang]="pembuat()" />
         </div>
       </div>
     </section>
@@ -178,5 +180,13 @@ const KODE_KELAS = [
 export class Tentang {
   protected readonly jalur = JALUR;
   protected readonly kodeKelas = KODE_KELAS;
-  protected readonly pembuat = PEMBUAT;
+  private readonly sumberPembuat = httpResource(permintaanPembuat, {
+    parse: bacaPembuat,
+  });
+
+  protected readonly pembuat = computed<Pembuat>(() => {
+    const sumber = this.sumberPembuat;
+
+    return sumber.hasValue() ? pembuatDariServer(sumber.value()) : PEMBUAT;
+  });
 }

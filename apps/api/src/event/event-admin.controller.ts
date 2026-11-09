@@ -28,12 +28,14 @@ import { Throttle } from '@nestjs/throttler';
 import {
   EventAdminListQuerySchema,
   EventCreateSchema,
+  EventImagesSchema,
   EventUpdateSchema,
   UuidSchema,
-  type EventAdmin,
+  type EventAdminDetail,
   type EventAdminListQuery,
   type EventAdminPage,
   type EventCreate,
+  type EventImages,
   type EventUpdate,
 } from '@kelas/contracts';
 import type { Request, Response } from 'express';
@@ -97,7 +99,7 @@ export class EventAdminController {
   async detail(
     @Param('id', new ZodValidationPipe(UuidSchema)) id: string,
     @Res({ passthrough: true }) response: Response,
-  ): Promise<EventAdmin> {
+  ): Promise<EventAdminDetail> {
     const detail = await this.service.detail(id);
 
     response.setHeader('ETag', etagOf(detail.version));
@@ -114,7 +116,7 @@ export class EventAdminController {
     @CurrentSession() session: SessionContext,
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
-  ): Promise<EventAdmin> {
+  ): Promise<EventAdminDetail> {
     const created = await this.service.create(body, session, this.contextOf(request));
 
     response.status(HttpStatus.CREATED);
@@ -135,7 +137,7 @@ export class EventAdminController {
     @CurrentSession() session: SessionContext,
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
-  ): Promise<EventAdmin> {
+  ): Promise<EventAdminDetail> {
     const updated = await this.service.update(
       id,
       body,
@@ -160,7 +162,7 @@ export class EventAdminController {
     @CurrentSession() session: SessionContext,
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
-  ): Promise<EventAdmin> {
+  ): Promise<EventAdminDetail> {
     return this.transition('publish', id, session, request, response);
   }
 
@@ -174,7 +176,7 @@ export class EventAdminController {
     @CurrentSession() session: SessionContext,
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
-  ): Promise<EventAdmin> {
+  ): Promise<EventAdminDetail> {
     return this.transition('archive', id, session, request, response);
   }
 
@@ -190,8 +192,33 @@ export class EventAdminController {
     @CurrentSession() session: SessionContext,
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
-  ): Promise<EventAdmin> {
+  ): Promise<EventAdminDetail> {
     return this.transition('restore', id, session, request, response);
+  }
+
+  @Patch(':id/images')
+  @writeRoute()
+  @Roles('editor', 'admin')
+  @ApiOperation({ summary: 'Mengganti daftar foto kegiatan dari album galeri' })
+  @ApiParam({ name: 'id', description: 'UUID kegiatan' })
+  @ApiOkResponse({ description: 'Kegiatan setelah foto diganti' })
+  async setImages(
+    @Param('id', new ZodValidationPipe(UuidSchema)) id: string,
+    @Body(new ZodValidationPipe(EventImagesSchema)) body: EventImages,
+    @CurrentSession() session: SessionContext,
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<EventAdminDetail> {
+    const result = await this.service.setImages(
+      id,
+      body.imageIds,
+      session,
+      this.contextOf(request),
+    );
+
+    response.setHeader('ETag', etagOf(result.version));
+
+    return result;
   }
 
   private async transition(
@@ -200,7 +227,7 @@ export class EventAdminController {
     session: SessionContext,
     request: Request,
     response: Response,
-  ): Promise<EventAdmin> {
+  ): Promise<EventAdminDetail> {
     const context = this.contextOf(request);
     const expectedVersion = expectedVersionOf(request.headers['if-match']);
     const result = await this.service[action](id, session, context, expectedVersion);

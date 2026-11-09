@@ -14,6 +14,7 @@
     "test:coverage": "vitest run --coverage",
     "db:migrate": "nest build && dotenv -e .env -- node dist/db/migrate.js",
     "db:seed": "nest build && dotenv -e .env -- node dist/db/seed-admin.js",
+    "db:seed:members": "nest build && dotenv -e .env -- node dist/db/seed-members.js",
     "db:sweep-media": "nest build && dotenv -e .env -- node dist/db/sweep-media.js",
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio"

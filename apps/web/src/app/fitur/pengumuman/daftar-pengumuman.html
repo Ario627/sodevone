@@ -15,6 +15,10 @@
   </div>
 </header>
 
+@if (papan().length > 0) {
+  <kelas-papan-layang class="mt-8 block" [butir]="papan()" (buka)="bukaPapan($event)" />
+}
+
 <form
   class="mt-6 grid gap-4 border-b border-garis-halus pb-4 sm:grid-cols-[minmax(0,1fr)_11rem_auto] sm:items-end"
   (submit)="cari($event)"
@@ -102,7 +106,13 @@
         </div>
 
         <div class="min-w-0 sm:py-8 sm:pr-8">
-          <p class="teks-meta bertanda text-sinyal">{{ labelKategori(utama.category) }}</p>
+          <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            @if (utama.isPinned) {
+              <span class="teks-meta text-sinyal">Disematkan</span>
+            }
+
+            <span class="teks-meta bertanda text-sinyal">{{ labelKategori(utama.category) }}</span>
+          </p>
 
           <h2
             class="mt-3 max-w-[26ch] font-serif text-[1.75rem] leading-[1.06] tracking-[-0.03em] underline-offset-[7px] group-hover:underline sm:text-[2.25rem]"
@@ -143,7 +153,12 @@
               <kelas-stempel-tanggal [nilai]="item.publishedAt" />
 
               <div class="col-span-2 min-w-0 sm:col-span-1">
-                <p class="teks-meta text-teks-sekunder">{{ labelKategori(item.category) }}</p>
+                <p class="teks-meta text-teks-sekunder">
+                  @if (item.isPinned) {
+                    <span class="text-sinyal">Semat · </span>
+                  }
+                  {{ labelKategori(item.category) }}
+                </p>
 
                 <h3
                   class="mt-1 font-serif text-lg leading-snug tracking-[-0.015em] underline-offset-4 group-hover:underline"

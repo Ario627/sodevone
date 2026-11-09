@@ -40,6 +40,10 @@ interface Sel {
 export class VoxelMonogram {
   private readonly kanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('kanvas');
   readonly teks = input('XI');
+
+  readonly matriks = input<readonly string[]>([]);
+
+  readonly warna = input<string | undefined>(undefined);
   private readonly pegang = inject(DestroyRef);
 
   private rusak = false;
@@ -62,6 +66,12 @@ export class VoxelMonogram {
   }
 
   private susunSel(teks: string): readonly Sel[] {
+    const baris = this.matriks();
+
+    if (baris.length > 0) {
+      return this.susunMatriks(baris);
+    }
+
     const tengahX = (lebarTeks(teks) - 1) / 2;
     const tengahY = (TINGGI_GLYPH - 1) / 2;
     return titikTeks(teks).map((t) => ({
@@ -69,6 +79,39 @@ export class VoxelMonogram {
       y: tengahY - t.baris,
       tunda: (t.kolom + t.baris) * JEDA_PIKSEL,
     }));
+  }
+
+  private susunMatriks(baris: readonly string[]): readonly Sel[] {
+    const kolom = baris[0]?.length ?? 1;
+    const tengahX = (kolom - 1) / 2;
+    const tengahY = (baris.length - 1) / 2;
+    const sel: Sel[] = [];
+
+    baris.forEach((isi, r) => {
+      [...isi].forEach((nilai, c) => {
+        if (nilai !== '1') {
+          return;
+        }
+
+        sel.push({
+          x: c - tengahX,
+          y: tengahY - r,
+          tunda: (c + r) * JEDA_PIKSEL,
+        });
+      });
+    });
+
+    return sel;
+  }
+
+  private ukuranDunia(): { lebar: number; tinggi: number } {
+    const baris = this.matriks();
+
+    if (baris.length > 0) {
+      return { lebar: baris[0]?.length ?? 1, tinggi: baris.length };
+    }
+
+    return { lebar: lebarTeks(this.teks()), tinggi: TINGGI_GLYPH };
   }
 
   private async siapkan(): Promise<void> {
@@ -136,7 +179,7 @@ export class VoxelMonogram {
     semuaCahaya.add(grup);
 
     const kisiLantai = new THREE.GridHelper(16, 16);
-    kisiLantai.position.set(0, -((TINGGI_GLYPH - 1) / 2) - 0.85, -0.4);
+    kisiLantai.position.set(0, -((this.ukuranDunia().tinggi - 1) / 2) - 0.85, -0.4);
 
     const bahanKisi = kisiLantai.material as InstanceType<typeof THREE.LineBasicMaterial>;
     bahanKisi.transparent = true;
@@ -152,11 +195,20 @@ export class VoxelMonogram {
     const warna = new THREE.Color();
 
     const pewarnaan = (): void => {
-      const dasar = [
-        warnaToken('--color-teks-utama', '#1d1c1a'),
-        warnaToken('--color-teks-kuat-sekunder', '#4a4844'),
-        warnaToken('--color-garis-tegas', '#c9c5ba'),
-      ];
+      const utama = this.warna();
+
+      const dasar =
+        utama === undefined
+          ? [
+              warnaToken('--color-teks-utama', '#1d1c1a'),
+              warnaToken('--color-teks-kuat-sekunder', '#4a4844'),
+              warnaToken('--color-garis-tegas', '#c9c5ba'),
+            ]
+          : [
+              warnaToken(utama, '#1d1c1a'),
+              warnaToken(utama, '#1d1c1a'),
+              warnaToken('--color-garis-tegas', '#c9c5ba'),
+            ];
       let i = 0;
       for (let s = 0; s < sel.length; s += 1) {
         for (let l = 0; l < LAPIS; l += 1) {

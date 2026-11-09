@@ -9,7 +9,7 @@ import type { RuntimeEnv } from '../bootstrap.js';
 import { SocialService } from './social.service.js';
 import { SocialPublicController } from './social.public.controller.js';
 
-const ETAG = '"2026-10-29T02:00:00.000Z-1"';
+const ETAG = '"2026-10-29T02-00-00-000Z-1"';
 
 const SATU_ITEM = {
   id: '3f9a1c4e-1111-4222-8333-444455556666',

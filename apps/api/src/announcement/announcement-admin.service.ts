@@ -22,6 +22,14 @@ import type {
   AnnouncementAdminListRow,
   AnnouncementPatch,
 } from './announcement-admin.repository.js';
+import { AnnouncementAttachmentRepository } from './announcement-attachment.repository.js';
+import { toAttachments } from './announcement-attachment.mapper.js';
+import {
+  canPin,
+  hasRoom,
+  PIN_FULL_MESSAGE,
+  PIN_NOT_PUBLISHED_MESSAGE,
+} from './announcement-pin.js';
 import { toAdminDetail, toAdminList } from './announcement.mapper.js';
 import { assertTransition } from './announcement-status.js';
 
@@ -95,6 +103,7 @@ function patchOf(current: AnnouncementAdminListRow, input: AnnouncementUpdate): 
 export class AnnouncementAdminService {
   constructor(
     private readonly repository: AnnouncementAdminRepository,
+    private readonly attachments: AnnouncementAttachmentRepository,
     private readonly audit: AuditRepository,
     private readonly database: DatabaseService,
   ) {}
@@ -166,7 +175,7 @@ export class AnnouncementAdminService {
       throw new NotFoundException({ code: 'NOT_FOUND', message: NOT_FOUND_MESSAGE });
     }
 
-    return toAdminDetail(row);
+    return toAdminDetail(row, toAttachments(await this.attachments.findMany(this.database.db, id)));
   }
 
   async create(
@@ -298,5 +307,55 @@ export class AnnouncementAdminService {
     expectedVersion: number | undefined,
   ): Promise<AnnouncementAdminDetail> {
     return this.changeStatus(id, DRAFT_STATUS, 'unpublish', actor, context, expectedVersion);
+  }
+  async setPinned(
+    id: string,
+    pinned: boolean,
+    actor: SessionContext,
+    context: RequestContext,
+    expectedVersion: number | undefined,
+  ): Promise<AnnouncementAdminDetail> {
+    const current = await this.repository.findById(id);
+
+    if (current === undefined) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: NOT_FOUND_MESSAGE });
+    }
+
+    if (current.isPinned === pinned) {
+      return toAdminDetail(
+        current,
+        toAttachments(await this.attachments.findMany(this.database.db, id)),
+      );
+    }
+
+    if (pinned && !canPin(current.status as AnnouncementStatus)) {
+      throw new ConflictException({ code: 'CONFLICT', message: PIN_NOT_PUBLISHED_MESSAGE });
+    }
+
+    if (pinned) {
+      const pinnedCount = await this.repository.countPinned(this.database.db);
+
+      if (!hasRoom(pinnedCount, current.isPinned)) {
+        throw new ConflictException({ code: 'CONFLICT', message: PIN_FULL_MESSAGE });
+      }
+    }
+
+    const now = new Date().toISOString();
+
+    await this.database.db.transaction(async (tx) => {
+      const applied = await this.repository.update(tx, id, expectedVersion, {
+        isPinned: pinned,
+        pinnedAt: pinned ? now : null,
+        updatedAt: now,
+      });
+
+      if (applied === undefined) {
+        throw new ConflictException({ code: 'CONFLICT', message: VERSION_CONFLICT_MESSAGE });
+      }
+
+      await this.audit.recordWithin(tx, this.auditOf(actor, context, pinned ? 'pin' : 'unpin', id));
+    });
+
+    return this.detail(id);
   }
 }

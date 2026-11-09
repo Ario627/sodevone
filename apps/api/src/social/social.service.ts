@@ -11,8 +11,9 @@ import {
 import { AuditRepository } from '../audit/audit.repository.js';
 import type { AuditEntryInput } from '../audit/audit.repository.js';
 import type { SessionContext } from '../auth/auth.service.js';
+import { collectionEtagOf } from '../common/http/collection-etag.js';
 import type { RequestContext } from '../common/http/request-context.js';
-import type { DatabaseService } from '../db/database.service.js';
+import { DatabaseService } from '../db/database.service.js';
 import type { Executor } from '../db/executor.js';
 import type { SocialLinkInsert } from '../db/schema/social-link.js';
 import { SocialRepository } from './social.repository.js';
@@ -65,7 +66,6 @@ function imageChoiceOf(
 
   return { imageId: id, imageUrl: url };
 }
-
 
 @Injectable()
 export class SocialService {
@@ -120,7 +120,7 @@ export class SocialService {
 
     const items = toSocialCollection(rows);
 
-    return { items, etag: `"${latest ?? 'kosong'}-${items.length}"` };
+    return { items, etag: collectionEtagOf(latest, items.length) };
   }
 
   async list(): Promise<SocialLinkAdminList> {

@@ -1,6 +1,11 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import type {
-  EventAdmin,
+  EventAdminDetail,
   EventAdminListQuery,
   EventAdminPage,
   EventCreate,
@@ -21,7 +26,8 @@ import { EventAdminRepository } from './event-admin.repository.js';
 import type { EventAdminRow, EventPatch } from './event-admin.repository.js';
 import { assertEventSchedule } from './event-schedule.js';
 import { assertEventTransition } from './event-status.js';
-import { toEventAdmin, toEventAdminList } from './event.mapper.js';
+import { EventImageRepository } from './event-image.repository.js';
+import { toEventAdminDetail, toEventAdminList, toEventPhotos } from './event.mapper.js';
 
 const DRAFT_STATUS: EventStatus = 'draft';
 
@@ -110,6 +116,7 @@ function statusPatchOf(target: EventStatus, now: string): EventPatch {
 export class EventAdminService {
   constructor(
     private readonly repository: EventAdminRepository,
+    private readonly images: EventImageRepository,
     private readonly audit: AuditRepository,
     private readonly database: DatabaseService,
   ) {}
@@ -148,21 +155,26 @@ export class EventAdminService {
       status: query.status,
     });
 
+    const counts = await this.images.countPhotos(rows.map((row) => row.id));
+
     return {
-      items: rows.map(toEventAdminList),
+      items: rows.map((row) => toEventAdminList(row, counts.get(row.id) ?? 0)),
       meta: metaOf(query.page, query.perPage, total),
     };
   }
 
-  async detail(id: string): Promise<EventAdmin> {
-    return toEventAdmin(await this.requireEvent(this.database.db, id));
+  async detail(id: string): Promise<EventAdminDetail> {
+    const row = await this.requireEvent(this.database.db, id);
+    const photos = toEventPhotos(await this.images.findPhotos(id, false));
+
+    return toEventAdminDetail(row, photos.length, photos);
   }
 
   async create(
     input: EventCreate,
     actor: SessionContext,
     context: RequestContext,
-  ): Promise<EventAdmin> {
+  ): Promise<EventAdminDetail> {
     const startsAt = toIsoInstant(input.startsAt);
     const endsAt =
       input.endsAt === undefined || input.endsAt === null ? null : toIsoInstant(input.endsAt);
@@ -205,7 +217,7 @@ export class EventAdminService {
     actor: SessionContext,
     context: RequestContext,
     expectedVersion: number | undefined,
-  ): Promise<EventAdmin> {
+  ): Promise<EventAdminDetail> {
     const current = await this.requireEvent(this.database.db, id);
     const plan = patchOf(current, input);
 
@@ -247,7 +259,7 @@ export class EventAdminService {
     actor: SessionContext,
     context: RequestContext,
     expectedVersion: number | undefined,
-  ): Promise<EventAdmin> {
+  ): Promise<EventAdminDetail> {
     const current = await this.requireEvent(this.database.db, id);
 
     assertEventTransition(current.status as EventStatus, target);
@@ -277,7 +289,7 @@ export class EventAdminService {
     actor: SessionContext,
     context: RequestContext,
     expectedVersion: number | undefined,
-  ): Promise<EventAdmin> {
+  ): Promise<EventAdminDetail> {
     return this.changeStatus(id, PUBLISHED_STATUS, 'publish', actor, context, expectedVersion);
   }
 
@@ -286,7 +298,7 @@ export class EventAdminService {
     actor: SessionContext,
     context: RequestContext,
     expectedVersion: number | undefined,
-  ): Promise<EventAdmin> {
+  ): Promise<EventAdminDetail> {
     return this.changeStatus(id, ARCHIVED_STATUS, 'archive', actor, context, expectedVersion);
   }
 
@@ -295,7 +307,43 @@ export class EventAdminService {
     actor: SessionContext,
     context: RequestContext,
     expectedVersion: number | undefined,
-  ): Promise<EventAdmin> {
+  ): Promise<EventAdminDetail> {
     return this.changeStatus(id, DRAFT_STATUS, 'restore', actor, context, expectedVersion);
+  }
+  async setImages(
+    id: string,
+    imageIds: string[],
+    actor: SessionContext,
+    context: RequestContext,
+  ): Promise<EventAdminDetail> {
+    await this.requireEvent(this.database.db, id);
+
+    const unique = new Set(imageIds);
+
+    if (unique.size !== imageIds.length) {
+      throw new BadRequestException({
+        code: 'VALIDATION_FAILED',
+        message: 'Daftar foto memuat gambar yang sama lebih dari sekali.',
+        fields: [{ path: 'imageIds', message: 'Gambar tidak boleh berulang.' }],
+      });
+    }
+
+    const known = await this.images.findKnownAlbumImages(imageIds);
+    const missing = imageIds.filter((imageId) => !known.has(imageId));
+
+    if (missing.length > 0) {
+      throw new BadRequestException({
+        code: 'VALIDATION_FAILED',
+        message: 'Ada foto yang tidak ditemukan atau albumnya belum terbit.',
+        fields: [{ path: 'imageIds', message: `Tidak dikenal: ${missing.join(', ')}` }],
+      });
+    }
+
+    await this.database.db.transaction(async (tx) => {
+      await this.images.replaceAll(tx, id, imageIds);
+      await this.audit.recordWithin(tx, this.auditOf(actor, context, 'update', id));
+    });
+
+    return this.detail(id);
   }
 }

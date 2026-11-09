@@ -1,13 +1,8 @@
 import { createHash } from 'node:crypto';
-import { readdir, readFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import postgres from 'postgres';
-
-const MIGRATION_DIRECTORY = path.join(import.meta.dirname, 'migrations');
-
-const MIGRATION_FILE = /^\d{4}_[a-z0-9_]+\.sql$/;
-
-const MIGRATION_PREFIX = /^(\d{4})_/;
+import { MIGRATION_DIRECTORY, migrationFileNames, migrationPrefixOf } from './migration-catalog.js';
 
 function loadEnvFile(): void {
   try {
@@ -27,7 +22,7 @@ function assertUniquePrefixes(names: string[]): void {
   const seen = new Map<string, string>();
 
   for (const name of names) {
-    const prefix = MIGRATION_PREFIX.exec(name)?.[1];
+    const prefix = migrationPrefixOf(name);
 
     if (prefix === undefined) {
       continue;
@@ -47,9 +42,7 @@ function assertUniquePrefixes(names: string[]): void {
 }
 
 async function listMigrationFiles(): Promise<string[]> {
-  const entries = await readdir(MIGRATION_DIRECTORY);
-
-  const names = entries.filter((entry) => MIGRATION_FILE.test(entry)).sort();
+  const names = await migrationFileNames();
 
   assertUniquePrefixes(names);
 

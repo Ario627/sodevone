@@ -1,3 +1,5 @@
+import type { AnggotaServer } from '../api/anggota.api';
+
 export const BARIS_KURSI = 6;
 
 export const KOLOM_KURSI = 6;
@@ -108,3 +110,38 @@ export const WALI_KELAS: Anggota = {
 };
 
 export const SEMUA_ANGGOTA: readonly Anggota[] = [...SISWA_LIST, WALI_KELAS];
+
+export const ANGGOTA_CADANGAN = SEMUA_ANGGOTA;
+
+export function dariServer(daftar: readonly AnggotaServer[]): readonly Anggota[] {
+  const urut = [...daftar].sort((a, b) => a.order - b.order);
+  const peserta = urut.filter((item) => item.role === 'student').slice(0, JUMLAH_SISWA);
+  const wali = urut.find((item) => item.role === 'homeroom');
+
+  const siswa = peserta.map((item, indeks) => ({
+    id: item.id,
+    urut: indeks + 1,
+    nama: item.fullName,
+    panggilan: item.nickname,
+    hobi: item.hobby,
+    catatan: item.note,
+    warna: corakDari(indeks),
+  }));
+
+  if (wali === undefined) {
+    return siswa;
+  }
+
+  return [
+    ...siswa,
+    {
+      id: wali.id,
+      urut: siswa.length + 1,
+      nama: wali.fullName,
+      panggilan: wali.nickname,
+      hobi: wali.hobby,
+      catatan: wali.note,
+      warna: 5,
+    },
+  ];
+}

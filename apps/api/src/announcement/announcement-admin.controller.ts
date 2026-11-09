@@ -20,12 +20,14 @@ import { Throttle } from '@nestjs/throttler';
 import {
   AnnouncementAdminListQuerySchema,
   AnnouncementCreateSchema,
+  AnnouncementPinSchema,
   AnnouncementUpdateSchema,
   UuidSchema,
   type AnnouncementAdminDetail,
   type AnnouncementAdminListQuery,
   type AnnouncementAdminPage,
   type AnnouncementCreate,
+  type AnnouncementPin,
   type AnnouncementUpdate,
 } from '@kelas/contracts';
 import type { Request, Response } from 'express';
@@ -207,6 +209,32 @@ export class AnnouncementAdminController {
     @Res({ passthrough: true }) response: Response,
   ): Promise<AnnouncementAdminDetail> {
     return this.transition('unpublish', id, session, request, response);
+  }
+
+  @Patch(':id/pin')
+  @writeRoute()
+  @Roles('editor', 'admin')
+  @ApiOperation({ summary: 'Menyematkan atau melepas sematan pengumuman' })
+  @ApiParam({ name: 'id', description: 'UUID pengumuman' })
+  @ApiOkResponse({ description: 'Pengumuman setelah sematan diubah' })
+  async pin(
+    @Param('id', new ZodValidationPipe(UuidSchema)) id: string,
+    @Body(new ZodValidationPipe(AnnouncementPinSchema)) body: AnnouncementPin,
+    @CurrentSession() session: SessionContext,
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<AnnouncementAdminDetail> {
+    const result = await this.service.setPinned(
+      id,
+      body.pinned,
+      session,
+      this.contextOf(request),
+      expectedVersionOf(request.headers['if-match']),
+    );
+
+    response.setHeader('ETag', etagOf(result.version));
+
+    return result;
   }
 
   private async transition(

@@ -3,8 +3,14 @@ import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/c
 import { RouterLink } from '@angular/router';
 import type { AlbumListQuery, AlbumSummary } from '@kelas/contracts';
 import { bacaHalamanAlbum, permintaanDaftarAlbum } from '../../inti/api/galeri.api';
+import { bacaKoleksiAnggota, permintaanAnggota } from '../../inti/api/anggota.api';
 import { toApiFailure } from '../../inti/api/dasar';
-import type { Anggota } from '../../inti/kelas/anggota';
+import {
+  ANGGOTA_CADANGAN,
+  JUMLAH_SISWA,
+  dariServer,
+  type Anggota,
+} from '../../inti/kelas/anggota';
 import { AngkaPiksel } from '../../komponen/angka-piksel/angka-piksel';
 import { GalatMuat } from '../../komponen/galat-muat/galat-muat';
 import { JejakAlbum } from '../../komponen/jejak-album/jejak-album';
@@ -36,7 +42,9 @@ export class Kelas {
     { parse: bacaHalamanAlbum },
   );
 
-  protected readonly sedangMemuat = this.sumber.isLoading;
+  private readonly sumberAnggota = httpResource(permintaanAnggota, {
+    parse: bacaKoleksiAnggota,
+  });
 
   protected readonly data = computed(() => {
     const sumber = this.sumber;
@@ -51,6 +59,34 @@ export class Kelas {
   });
 
   protected readonly album = computed<readonly AlbumSummary[]>(() => this.data()?.items ?? []);
+
+  protected readonly sedangMemuat = this.sumber.isLoading;
+
+  protected readonly anggotaSiap = computed(() => {
+    const sumber = this.sumberAnggota;
+
+    return sumber.hasValue() || sumber.error() !== undefined;
+  });
+
+  protected readonly anggota = computed<readonly Anggota[]>(() => {
+    const sumber = this.sumberAnggota;
+
+    if (!sumber.hasValue()) {
+      return ANGGOTA_CADANGAN;
+    }
+
+    const hasil = dariServer(sumber.value().items);
+
+    return hasil.length > 0 ? hasil : ANGGOTA_CADANGAN;
+  });
+
+  protected readonly jumlahSiswa = computed(() =>
+    String(this.anggota().filter((item) => item.urut <= JUMLAH_SISWA).length),
+  );
+
+  protected readonly jumlahWali = computed(() =>
+    String(this.anggota().filter((item) => item.urut > JUMLAH_SISWA).length),
+  );
 
   protected readonly anggotaTerpilih = signal<Anggota | null>(null);
   protected readonly fotoTerpilih = signal<AlbumSummary | null>(null);

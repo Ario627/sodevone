@@ -5,6 +5,7 @@ import type { SessionContext } from '../auth/auth.service.js';
 import type { RequestContext } from '../common/http/request-context.js';
 import type { DatabaseService } from '../db/database.service.js';
 import { EventAdminRepository } from './event-admin.repository.js';
+import type { EventImageRepository } from './event-image.repository.js';
 import type { EventAdminListRow, EventAdminRow } from './event-admin.repository.js';
 import { EventAdminService } from './event-admin.service.js';
 
@@ -75,13 +76,21 @@ function buatService(opsi: Opsi = {}) {
   const tx = { name: 'tx' };
   const database = { db: { transaction: (run: (scope: unknown) => Promise<unknown>) => run(tx) } };
 
+  const images = {
+    findPhotos: vi.fn().mockResolvedValue([]),
+    countPhotos: vi.fn().mockResolvedValue(new Map<string, number>()),
+    replaceAll: vi.fn().mockResolvedValue(undefined),
+    findKnownAlbumImages: vi.fn().mockResolvedValue(new Set<string>()),
+  };
+
   const service = new EventAdminService(
     repository as unknown as EventAdminRepository,
+    images as unknown as EventImageRepository,
     audit as unknown as AuditRepository,
     database as unknown as DatabaseService,
   );
 
-  return { service, repository, audit, tx };
+  return { service, repository, images, audit, tx };
 }
 
 describe('EventAdminService.list', () => {
@@ -96,6 +105,7 @@ describe('EventAdminService.list', () => {
           slug: 'pensi-sekolah',
           title: 'Pensi Sekolah',
           location: 'Aula',
+    photoCount: 0,
           startsAt: MULAI_ISO,
           endsAt: SELESAI_ISO,
           status: 'draft',

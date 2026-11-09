@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, input } from "@angular/core";
-import { sumberGambarSosial, type Platform, type PostinganSosial } from "../../inti/api/sosial.api";
+import { ChangeDetectionStrategy, Component, computed, input, signal } from "@angular/core";
+import { sumberGambarSosial, type PostinganSosial } from "../../inti/api/sosial.api";
 
-const LABEL: Record<Platform, string> = {
+const LABEL: Record<PostinganSosial['platform'], string> = {
   instagram: 'Instagram',
   tiktok: 'TikTok',
 };
@@ -31,7 +31,7 @@ function bentangDari(postingan: PostinganSosial, indeks: number): Bentang {
   template: `
     <ul class="mosaik">
       @for (item of postingan(); track item.id; let i = $index) {
-        <li class="petak" [class]="'petak-' + bentang(i)">
+        <li class="petak" [class]="'petak-' + bentang(i)" [class.kosong]="rusakkah(item.id)">
           <a class="ubin" [href]="item.url" target="_blank" rel="noopener noreferrer nofollow">
             <img
               [src]="sumber(item, 'kecil')"
@@ -40,6 +40,7 @@ function bentangDari(postingan: PostinganSosial, indeks: number): Bentang {
               [attr.height]="item.image.height"
               [attr.loading]="i < 3 ? 'eager' : 'lazy'"
               decoding="async"
+              (error)="gagal(item.id, $event)"
             />
 
             <span class="tabir" aria-hidden="true"></span>
@@ -94,6 +95,14 @@ function bentangDari(postingan: PostinganSosial, indeks: number): Bentang {
       border: 1px solid var(--color-garis-halus);
       overflow: hidden;
       isolation: isolate;
+    }
+
+    .petak.kosong .ubin {
+      background-image: repeating-linear-gradient(
+        135deg,
+        var(--color-garis-halus) 0 1px,
+        transparent 1px 7px
+      );
     }
 
     .ubin img {
@@ -226,6 +235,23 @@ export class SosialMosaik {
 
   protected readonly LABEL = LABEL;
 
+  private readonly rusak = signal<readonly string[]>([]);
+
+  protected gagal(id: string, event: Event): void {
+    const gambar = event.target;
+
+    if (!(gambar instanceof HTMLImageElement)) {
+      return;
+    }
+
+    gambar.hidden = true;
+    this.rusak.update((daftar) => (daftar.includes(id) ? daftar : [...daftar, id]));
+  }
+
+  protected rusakkah(id: string): boolean {
+    return this.rusak().includes(id);
+  }
+
   private readonly daftar = computed(() => this.postingan());
 
   protected bentang(indeks: number): Bentang {
@@ -235,6 +261,6 @@ export class SosialMosaik {
   }
 
   protected sumber(item: PostinganSosial, ukuran: 'kecil' | 'sedang'): string {
-    return sumberGambarSosial(item.image, ukuran);
+    return sumberGambarSosial(item, ukuran);
   }
 }

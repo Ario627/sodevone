@@ -14,10 +14,8 @@ import {
   BARIS_KURSI,
   JUMLAH_SISWA,
   KOLOM_KURSI,
-  SEMUA_ANGGOTA,
-  SISWA_LIST,
-  WALI_KELAS,
   WARNA_BAHAN,
+  kursiDari,
   type Anggota,
 } from '../../inti/kelas/anggota';
 
@@ -114,6 +112,8 @@ const AYUN_KEPALA = 0.13;
   `,
 })
 export class RuangKelas {
+  readonly anggota = input.required<readonly Anggota[]>();
+
   readonly terpilih = input<string | null>(null);
 
   readonly pilih = output<Anggota>();
@@ -162,6 +162,11 @@ export class RuangKelas {
     if (this.rusak) {
       return;
     }
+
+    const SEMUA_ANGGOTA = this.anggota();
+    const WALI_KELAS = SEMUA_ANGGOTA.find((item) => item.urut > JUMLAH_SISWA) ??
+      (SEMUA_ANGGOTA[SEMUA_ANGGOTA.length - 1] as Anggota);
+    const SISWA_LIST = SEMUA_ANGGOTA.filter((item) => item.id !== WALI_KELAS.id);
 
     const renderer = new THREE.WebGLRenderer({ canvas: kanvas, antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -253,10 +258,14 @@ export class RuangKelas {
 
     const mesin = new THREE.Object3D();
 
-    const posisi: { x: number; z: number }[] = SISWA_LIST.map((siswa) => ({
-      x: (siswa.kursi.kolom - (KOLOM_KURSI - 1) / 2) * JARAK_MEJA,
-      z: (siswa.kursi.baris - (BARIS_KURSI - 1) / 2) * JARAK_MEJA,
-    }));
+    const posisi: { x: number; z: number }[] = SISWA_LIST.map((_, indeks) => {
+      const kursi = kursiDari(indeks);
+
+      return {
+        x: (kursi.kolom - (KOLOM_KURSI - 1) / 2) * JARAK_MEJA,
+        z: (kursi.baris - (BARIS_KURSI - 1) / 2) * JARAK_MEJA,
+      };
+    });
 
     posisi.push({ x: 0, z: Z_WALI });
 

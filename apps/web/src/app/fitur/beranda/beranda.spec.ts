@@ -1,16 +1,47 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed } from '@angular/core/testing';
+import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { describe, expect, it } from 'vitest';
 import { Beranda } from './beranda';
 
 const KOSONG = { announcements: [], upcomingEvents: [], albums: [] };
 
+const HALAMAN_KOSONG = { items: [], meta: { page: 1, perPage: 6, total: 0, totalPages: 0 } };
+
 function kosongkanSosial(http: HttpTestingController): void {
   for (const permintaan of http.match((r) => r.url === '/api/public/social')) {
     permintaan.flush({ items: [] });
   }
+}
+
+function kosongkanAlbum(http: HttpTestingController): void {
+  for (const permintaan of http.match((r) => r.url === '/api/public/albums')) {
+    permintaan.flush(HALAMAN_KOSONG);
+  }
+}
+
+const PENGATURAN = {
+  voxelBoard: { kind: 'teks', teks: 'XI', warna: 'sinyal' },
+  updatedAt: null,
+};
+
+function kosongkanPengaturan(http: HttpTestingController): void {
+  for (const permintaan of http.match((r) => r.url === '/api/public/settings')) {
+    permintaan.flush(PENGATURAN);
+  }
+}
+
+
+async function selesaikan(
+  fixture: ComponentFixture<Beranda>,
+  http: HttpTestingController,
+): Promise<void> {
+  TestBed.tick();
+  kosongkanAlbum(http);
+  kosongkanSosial(http);
+  kosongkanPengaturan(http);
+  await fixture.whenStable();
 }
 
 async function siapkan() {
@@ -31,6 +62,7 @@ const PENGUMUMAN = {
   excerpt: 'Ujian dimulai pukul 07.30.',
   category: 'akademik',
   state: 'published',
+  isPinned: false,
   publishedAt: '2026-10-29T01:00:00.000Z',
 };
 
@@ -56,15 +88,61 @@ const ALBUM = {
 
 describe('Beranda', () => {
   it('memakai satu permintaan agregat untuk konten utama', async () => {
-    const { http } = await siapkan();
+    const { fixture, http } = await siapkan();
 
     const permintaan = http.expectOne('/api/public/home');
 
     expect(permintaan.request.method).toBe('GET');
 
     permintaan.flush(KOSONG);
-    kosongkanSosial(http);
+    await selesaikan(fixture, http);
+
     http.verify();
+  });
+
+  it('menandai pengumuman yang disematkan', async () => {
+    const { fixture, http } = await siapkan();
+
+    http.expectOne('/api/public/home').flush({
+      announcements: [{ ...PENGUMUMAN, isPinned: true }],
+      upcomingEvents: [],
+      albums: [],
+    });
+
+    await selesaikan(fixture, http);
+
+    expect(fixture.nativeElement.textContent as string).toContain('Disematkan');
+  });
+
+  it('memakai papan piksel dari pengaturan situs', async () => {
+    const { fixture, http } = await siapkan();
+
+    http.expectOne('/api/public/home').flush(KOSONG);
+
+    for (const permintaan of http.match((r) => r.url === '/api/public/settings')) {
+      permintaan.flush({
+        voxelBoard: {
+          kind: 'matriks',
+          baris: [
+            '01110',
+            '10001',
+            '10001',
+            '11111',
+            '10001',
+            '10001',
+            '10001',
+          ],
+          warna: 'hijau',
+        },
+        updatedAt: '2026-11-08T01:00:00.000Z',
+      });
+    }
+
+    kosongkanAlbum(http);
+    kosongkanSosial(http);
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.textContent as string).toContain('5 × 7');
   });
 
   it('menyembunyikan blok media sosial saat endpoint belum tersedia', async () => {
@@ -79,7 +157,7 @@ describe('Beranda', () => {
       );
     }
 
-    await fixture.whenStable();
+    await selesaikan(fixture, http);
 
     const teks = fixture.nativeElement.textContent as string;
 
@@ -100,13 +178,19 @@ describe('Beranda', () => {
             url: 'https://instagram.com/p/contoh',
             caption: 'Praktik laboratorium',
             postedAt: '2026-10-29T02:00:00.000Z',
-            image: { id: null, url: 'https://cdn.contoh/a.jpg', width: 1080, height: 1350 },
+            image: {
+              id: null,
+              url: 'https://cdn.contoh/a.jpg',
+              width: 1080,
+              height: 1350,
+              altText: null,
+            },
           },
         ],
       });
     }
 
-    await fixture.whenStable();
+    await selesaikan(fixture, http);
 
     const teks = fixture.nativeElement.textContent as string;
 
@@ -119,7 +203,7 @@ describe('Beranda', () => {
 
     http.expectOne('/api/public/home').flush(KOSONG);
     kosongkanSosial(http);
-    await fixture.whenStable();
+    await selesaikan(fixture, http);
 
     const teks = fixture.nativeElement.textContent as string;
 
@@ -132,7 +216,7 @@ describe('Beranda', () => {
 
     http.expectOne('/api/public/home').flush(KOSONG);
     kosongkanSosial(http);
-    await fixture.whenStable();
+    await selesaikan(fixture, http);
 
     const teks = fixture.nativeElement.textContent as string;
 
@@ -147,7 +231,7 @@ describe('Beranda', () => {
       .flush({ announcements: [PENGUMUMAN], upcomingEvents: [KEGIATAN], albums: [ALBUM] });
 
     kosongkanSosial(http);
-    await fixture.whenStable();
+    await selesaikan(fixture, http);
 
     const teks = fixture.nativeElement.textContent as string;
 
@@ -166,7 +250,7 @@ describe('Beranda', () => {
       .flush({ announcements: [PENGUMUMAN], upcomingEvents: [KEGIATAN], albums: [ALBUM] });
 
     kosongkanSosial(http);
-    await fixture.whenStable();
+    await selesaikan(fixture, http);
 
     const jalur = Array.from(
       fixture.nativeElement.querySelectorAll('a') as NodeListOf<HTMLAnchorElement>,
@@ -188,7 +272,7 @@ describe('Beranda', () => {
       );
 
     kosongkanSosial(http);
-    await fixture.whenStable();
+    await selesaikan(fixture, http);
 
     const teks = fixture.nativeElement.textContent as string;
 
@@ -206,7 +290,7 @@ describe('Beranda', () => {
     });
 
     kosongkanSosial(http);
-    await fixture.whenStable();
+    await selesaikan(fixture, http);
 
     expect((fixture.nativeElement.textContent as string).includes('Lampau')).toBe(false);
   });

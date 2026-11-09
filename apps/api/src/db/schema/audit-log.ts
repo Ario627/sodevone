@@ -11,6 +11,8 @@ export const AUDIT_ACTIONS = [
   'archive',
   'restore',
   'unpublish',
+  'pin',
+  'unpin',
   'delete',
   'upload',
   'login_success',
@@ -29,6 +31,10 @@ export const AUDIT_ENTITY_TYPES = [
   'user',
   'session',
   'social',
+  'member',
+  'contributor',
+  'attachment',
+  'setting',
 ] as const;
 
 export const auditLog = pgTable(

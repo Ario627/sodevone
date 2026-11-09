@@ -29,6 +29,7 @@ export type AnnouncementPublicRow = {
   body: string;
   category: string;
   status: string;
+  isPinned: boolean;
   publishedAt: string | null;
   updatedAt: string;
 };
@@ -43,6 +44,7 @@ const COLUMNS = {
   body: announcement.body,
   category: announcement.category,
   status: announcement.status,
+  isPinned: announcement.isPinned,
   publishedAt: announcement.publishedAt,
   updatedAt: announcement.updatedAt,
 };
@@ -82,7 +84,7 @@ export class AnnouncementRepository {
         .select(COLUMNS)
         .from(announcement)
         .where(where)
-        .orderBy(desc(announcement.publishedAt), asc(announcement.id))
+        .orderBy(desc(announcement.isPinned), desc(announcement.publishedAt), asc(announcement.id))
         .limit(input.perPage)
         .offset(offset),
       this.database.db.select({ value: count() }).from(announcement).where(where),

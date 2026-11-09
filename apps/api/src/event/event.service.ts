@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import type { EventCollection, EventDetail, EventSummary, PublishedState } from '@kelas/contracts';
 import { toIsoInstant, toIsoInstantOrNull } from '../common/text/instant.js';
+import { EventImageRepository } from './event-image.repository.js';
+import { toEventPhotos } from './event.mapper.js';
 import { EventRepository } from './event.repository.js';
 import type { EventPublicRow } from './event.repository.js';
 
@@ -26,13 +28,20 @@ function toSummary(row: EventPublicRow): EventSummary {
   };
 }
 
-function toDetail(row: EventPublicRow): EventDetail {
-  return { ...toSummary(row), description: row.description };
+function toDetail(row: EventPublicRow, photos: EventDetail['photos']): EventDetail {
+  return { ...toSummary(row), description: row.description, photos };
 }
 
 @Injectable()
 export class EventService {
-  constructor(private readonly repository: EventRepository) {}
+  constructor(
+    private readonly repository: EventRepository,
+    private readonly images: EventImageRepository,
+  ) {}
+
+  private async detailOf(row: EventPublicRow): Promise<EventDetail> {
+    return toDetail(row, toEventPhotos(await this.images.findPhotos(row.id, true)));
+  }
 
   async collection(): Promise<EventCollection> {
     const now = new Date().toISOString();
@@ -49,7 +58,7 @@ export class EventService {
     const row = await this.repository.findVisibleBySlug(slug);
 
     if (row !== undefined) {
-      return { kind: 'found', detail: toDetail(row) };
+      return { kind: 'found', detail: await this.detailOf(row) };
     }
 
     const redirectId = await this.repository.findRedirectTargetId(slug);
@@ -60,8 +69,10 @@ export class EventService {
 
     const moved = await this.repository.findVisibleById(redirectId);
 
-    return moved === undefined
-      ? { kind: 'missing' }
-      : { kind: 'moved', slug: moved.slug, detail: toDetail(moved) };
+    if (moved === undefined) {
+      return { kind: 'missing' };
+    }
+
+    return { kind: 'moved', slug: moved.slug, detail: await this.detailOf(moved) };
   }
 }

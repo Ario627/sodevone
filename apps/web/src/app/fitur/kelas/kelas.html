@@ -1,10 +1,13 @@
 <section class="relative">
   <div class="relative h-[clamp(20rem,70svh,44rem)] lg:h-[calc(100svh-4rem)]">
-    <kelas-ruang-kelas
-      [terpilih]="idTerpilih()"
-      (pilih)="bukaAnggota($event)"
-      class="absolute inset-0"
-    />
+    @if (anggotaSiap()) {
+      <kelas-ruang-kelas
+        [anggota]="anggota()"
+        [terpilih]="idTerpilih()"
+        (pilih)="bukaAnggota($event)"
+        class="absolute inset-0"
+      />
+    }
 
     <div class="pointer-events-none absolute inset-x-0 bottom-0">
       <div class="pudar-bawah absolute inset-x-0 bottom-0 h-[85%]"></div>
@@ -21,7 +24,7 @@
         <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
           <span class="flex items-center gap-2">
             <span class="text-teks-kuat-sekunder">
-              <kelas-angka-piksel teks="36" [tinggi]="15" />
+              <kelas-angka-piksel [teks]="jumlahSiswa()" [tinggi]="15" />
             </span>
             <span class="teks-meta text-teks-sekunder">siswa</span>
           </span>
@@ -30,7 +33,7 @@
 
           <span class="flex items-center gap-2">
             <span class="text-sinyal">
-              <kelas-angka-piksel teks="1" [tinggi]="15" />
+              <kelas-angka-piksel [teks]="jumlahWali()" [tinggi]="15" />
             </span>
             <span class="teks-meta text-teks-sekunder">wali kelas</span>
           </span>
@@ -91,7 +94,7 @@
       routerLink="/galeri"
       class="teks-meta mt-4 inline-flex min-h-11 items-center gap-1.5 border-b border-garis-tegas pb-1 text-teks-kuat-sekunder transition-colors duration-100 ease-keluar hover:border-sinyal hover:text-sinyal"
     >
-      Semua album <span aria-hidden="true">&rarr;</span>
+      Semua album 
     </a>
   </div>
 </section>

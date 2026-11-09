@@ -1,10 +1,10 @@
-import path from "node:path";
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
-import * as schema from "./schema/index.js";
-import { keptKeysOf, planMediaSweep, removeSweptFiles } from "../media/media-sweep.js";
-import type { SweepPlan } from "../media/media-sweep.js";
-import { galleryImage } from "./schema/index.js";
+import path from 'node:path';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+import * as schema from './schema/index.js';
+import { keptKeysOf, planMediaSweep, removeSweptFiles } from '../media/media-sweep.js';
+import type { SweepPlan } from '../media/media-sweep.js';
+import { announcementAttachment, galleryImage } from './schema/index.js';
 
 const DEFAULT_GRACE_MINUTES = 60;
 
@@ -13,30 +13,29 @@ const MINUTES_PER_HOUR = 60_000;
 const APPLY_FLAG = '--apply';
 
 function loadEnvFile(): void {
-    try {
-        process.loadEnvFile();
-    } catch {
-        return;
-    }
+  try {
+    process.loadEnvFile();
+  } catch {
+    return;
+  }
 }
 
-
 function requiredOf(name: string): string {
-    const value = process.env[name]?.trim();
-    if(value === undefined || value.length === 0) {
-        throw new Error(`Missing required environment variable: ${name}`);
-    }
+  const value = process.env[name]?.trim();
+  if (value === undefined || value.length === 0) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
 
-    return value;
+  return value;
 }
 
 function graceMsOf(raw: string | undefined): number {
-    const minutes = raw === undefined ? DEFAULT_GRACE_MINUTES : parseInt(raw, 10);
-    if(!Number.isFinite(minutes) || minutes < 0) {
-        throw new Error(`Invalid SWEEP_GRACE_MINUTES: ${raw}`);
-    }
+  const minutes = raw === undefined ? DEFAULT_GRACE_MINUTES : parseInt(raw, 10);
+  if (!Number.isFinite(minutes) || minutes < 0) {
+    throw new Error(`Invalid SWEEP_GRACE_MINUTES: ${raw}`);
+  }
 
-    return minutes * MINUTES_PER_HOUR;
+  return minutes * MINUTES_PER_HOUR;
 }
 
 function mebibyteOf(bytes: number): string {
@@ -76,10 +75,14 @@ async function run(): Promise<void> {
   const db = drizzle(client, { schema });
 
   try {
-    const rows = await db.select({ storageKey: galleryImage.storageKey }).from(galleryImage);
+    const [galleryRows, attachmentRows] = await Promise.all([
+      db.select({ storageKey: galleryImage.storageKey }).from(galleryImage),
+      db.select({ storageKey: announcementAttachment.storageKey }).from(announcementAttachment),
+    ]);
+
     const plan = await planMediaSweep({
       root,
-      keep: keptKeysOf(rows.map((row) => row.storageKey)),
+      keep: keptKeysOf([...galleryRows, ...attachmentRows].map((row) => row.storageKey)),
       graceMs,
       now: Date.now(),
     });

@@ -11,7 +11,8 @@ import { Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { SlugSchema } from '@kelas/contracts';
 import { toApiFailure } from '../../inti/api/dasar';
-import { bacaDetail, permintaanDetail } from '../../inti/api/pengumuman.api';
+import { bacaDetail, permintaanDetail, sumberLampiran } from '../../inti/api/pengumuman.api';
+import { ukuranBerkas } from '../../inti/api/admin-pengumuman.api';
 import { labelKategori } from '../../inti/format/label';
 import { tanggalJamTeks, tanggalTeks } from '../../inti/format/tanggal';
 import { GalatMuat } from '../../komponen/galat-muat/galat-muat';
@@ -49,6 +50,17 @@ export class DetailPengumuman {
 
   protected readonly tidakDitemukan = computed(
     () => !this.slugValid() || this.galat()?.missing === true,
+  );
+
+  protected readonly sumberLampiran = sumberLampiran;
+  protected readonly ukuranBerkas = ukuranBerkas;
+
+  protected readonly gambar = computed(
+    () => this.data()?.attachments.filter((item) => item.kind === 'image') ?? [],
+  );
+
+  protected readonly berkas = computed(
+    () => this.data()?.attachments.filter((item) => item.kind === 'file') ?? [],
   );
 
   protected readonly labelKategori = labelKategori;

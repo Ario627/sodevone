@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { and, asc, count, desc, eq, or, sql } from 'drizzle-orm';
 import { searchTermsOf, wordBoundaryPatternOf } from '../common/text/search.js';
 import { DatabaseService } from '../db/database.service.js';
-import type { Transaction } from '../db/executor.js';
+import type { Executor, Transaction } from '../db/executor.js';
 import { adminUser } from '../db/schema/admin-user.js';
 import { announcement } from '../db/schema/announcement.js';
 import type { AnnouncementInsert } from '../db/schema/announcement.js';
@@ -25,6 +25,7 @@ export type AnnouncementAdminListRow = {
   excerpt: string;
   category: string;
   status: string;
+  isPinned: boolean;
   authorId: string;
   authorName: string;
   version: number;
@@ -46,6 +47,7 @@ const LIST_COLUMNS = {
   excerpt: announcement.excerpt,
   category: announcement.category,
   status: announcement.status,
+  isPinned: announcement.isPinned,
   authorId: announcement.authorId,
   authorName: adminUser.displayName,
   version: announcement.version,
@@ -101,6 +103,15 @@ export class AnnouncementAdminRepository {
     ]);
 
     return { rows, total: totals[0]?.value ?? 0 };
+  }
+
+  async countPinned(exec: Executor): Promise<number> {
+    const rows = await exec
+      .select({ value: count() })
+      .from(announcement)
+      .where(eq(announcement.isPinned, true));
+
+    return rows[0]?.value ?? 0;
   }
 
   async findById(id: string): Promise<AnnouncementAdminDetailRow | undefined> {

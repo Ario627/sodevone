@@ -6,13 +6,13 @@ import { toApiFailure } from '../../inti/api/dasar';
 import { bacaHalamanAlbum, permintaanDaftarAlbum } from '../../inti/api/galeri.api';
 import { GALERI_PER_HALAMAN, halamanDari, tautanAlbum } from '../../inti/query/galeri';
 import { GalatMuat } from '../../komponen/galat-muat/galat-muat';
-import { GaleriMosaik } from '../../komponen/galeri-mosaik/galeri-mosaik';
 import { Kosong } from '../../komponen/kosong/kosong';
+import { PuzzleFoto } from '../../komponen/puzzle-foto/puzzle-foto';
 import { Memuat } from '../../komponen/memuat/memuat';
 
 @Component({
   selector: 'kelas-daftar-galeri',
-  imports: [RouterLink, Memuat, Kosong, GalatMuat, GaleriMosaik],
+  imports: [RouterLink, Memuat, Kosong, GalatMuat, PuzzleFoto],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './daftar-galeri.html',
 })
@@ -56,7 +56,6 @@ export class DaftarGaleri {
 
   protected readonly ringkasanHalaman = computed(() => {
     const meta = this.meta();
-
     return meta === undefined ? '' : `Halaman ${this.halamanAktif()} dari ${meta.totalPages}`;
   });
 

@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { DatabaseService } from '../db/database.service.js';
+import type { AnnouncementAttachmentRepository } from './announcement-attachment.repository.js';
 import { AnnouncementRepository } from './announcement.repository.js';
 import type { AnnouncementPublicRow } from './announcement.repository.js';
 import { AnnouncementService } from './announcement.service.js';
@@ -16,14 +18,24 @@ function rowOf(overrides: Partial<AnnouncementPublicRow> = {}): AnnouncementPubl
     body: 'Ujian **praktik** dimulai pukul 07.30.',
     category: 'akademik',
     status: 'published',
+    isPinned: false,
     publishedAt: WAKTU,
     updatedAt: WAKTU,
     ...overrides,
   };
 }
 
-function buatService(repository: Partial<AnnouncementRepository>) {
-  return new AnnouncementService(repository as AnnouncementRepository);
+function buatService(
+  repository: Partial<AnnouncementRepository>,
+  attachments: Partial<AnnouncementAttachmentRepository> = {},
+) {
+  const findMany = vi.fn().mockResolvedValue([]);
+
+  return new AnnouncementService(
+    repository as AnnouncementRepository,
+    { findMany, ...attachments } as unknown as AnnouncementAttachmentRepository,
+    { db: {} } as unknown as DatabaseService,
+  );
 }
 
 const KOSONG = { page: 1, perPage: 10, arsip: false };
@@ -40,6 +52,7 @@ describe('AnnouncementService.list', () => {
         excerpt: 'Ujian dimulai pukul 07.30.',
         category: 'akademik',
         state: 'published',
+        isPinned: false,
         publishedAt: WAKTU_ISO,
       },
     ]);

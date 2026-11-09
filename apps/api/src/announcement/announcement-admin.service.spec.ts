@@ -9,6 +9,7 @@ import type {
   AnnouncementAdminListRow,
 } from './announcement-admin.repository.js';
 import { AnnouncementAdminRepository } from './announcement-admin.repository.js';
+import type { AnnouncementAttachmentRepository } from './announcement-attachment.repository.js';
 import { AnnouncementAdminService } from './announcement-admin.service.js';
 
 const ID = '11111111-1111-4111-8111-111111111111';
@@ -38,6 +39,7 @@ function listRowOf(overrides: Partial<AnnouncementAdminListRow> = {}): Announcem
     excerpt: 'Pensi tahunan.',
     category: 'kegiatan',
     status: 'draft',
+    isPinned: false,
     authorId: AKTOR.userId,
     authorName: 'Budi Santoso',
     version: 1,
@@ -71,6 +73,15 @@ function buatService(opsi: Opsi = {}) {
     recordRedirect: vi.fn().mockResolvedValue(undefined),
     dropRedirect: vi.fn().mockResolvedValue(undefined),
   };
+  const attachments = {
+    findMany: vi.fn().mockResolvedValue([]),
+    countOf: vi.fn().mockResolvedValue(0),
+    nextSortOrder: vi.fn().mockResolvedValue(0),
+    insert: vi.fn(),
+    remove: vi.fn(),
+    findOne: vi.fn(),
+    applyOrder: vi.fn(),
+  };
   const audit = { record: vi.fn(), recordWithin: vi.fn().mockResolvedValue(undefined) };
   const tx = { name: 'tx' };
   const database = {
@@ -79,6 +90,7 @@ function buatService(opsi: Opsi = {}) {
 
   const service = new AnnouncementAdminService(
     repository as unknown as AnnouncementAdminRepository,
+    attachments as unknown as AnnouncementAttachmentRepository,
     audit as unknown as AuditRepository,
     database as unknown as DatabaseService,
   );
@@ -210,9 +222,9 @@ describe('AnnouncementAdminService.create', () => {
 
     repository.insert.mockRejectedValue(new Error('koneksi putus'));
 
-    await expect(
-      service.create({ title: 'Pensi', body: 'Isi.' }, AKTOR, KONTEKS),
-    ).rejects.toThrow('koneksi putus');
+    await expect(service.create({ title: 'Pensi', body: 'Isi.' }, AKTOR, KONTEKS)).rejects.toThrow(
+      'koneksi putus',
+    );
   });
 });
 

@@ -65,6 +65,60 @@
   --ease-keluar: cubic-bezier(0.2, 0, 0, 1);
 }
 
+::view-transition-old(root) {
+  transform-origin: 50% 42%;
+  animation: 380ms cubic-bezier(0.4, 0, 1, 1) both kamera-keluar;
+}
+
+::view-transition-new(root) {
+  transform-origin: 50% 44%;
+  animation: 620ms cubic-bezier(0.16, 1, 0.3, 1) both kamera-masuk;
+}
+
+::view-transition-group(kepala-situs) {
+  animation: none;
+}
+
+@keyframes kamera-keluar {
+  from {
+    filter: blur(0) brightness(1);
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  to {
+    filter: blur(7px) brightness(1.03);
+    opacity: 0;
+    transform: translate3d(0, -1.8vh, 0) scale(1.06);
+  }
+}
+
+@keyframes kamera-masuk {
+  from {
+    filter: blur(11px) brightness(1.05);
+    opacity: 0;
+    transform: translate3d(0, 2.6vh, 0) scale(0.938);
+  }
+
+  62% {
+    filter: blur(0) brightness(1);
+    opacity: 1;
+  }
+
+  to {
+    filter: blur(0) brightness(1);
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}
+
 @utility teks-meta {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
